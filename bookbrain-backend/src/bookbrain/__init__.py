@@ -1,0 +1,3 @@
+"""BookBrain API - Personal Knowledge Search System."""
+
+__version__ = "0.1.0"

@@ -1,0 +1,31 @@
+{
+  "name": "bookbrain",
+  "version": "1.0.0",
+  "description": "Personal Knowledge Search System using LLM + RAG",
+  "type": "module",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sskim91/bookbrain.git"
+  },
+  "keywords": [
+    "rag",
+    "llm",
+    "knowledge-search",
+    "pdf"
+  ],
+  "author": "Sskim",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sskim91/bookbrain/issues"
+  },
+  "homepage": "https://github.com/sskim91/bookbrain#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0"
+  }
+}
