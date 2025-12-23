@@ -1,10 +1,11 @@
 """Pytest configuration and fixtures."""
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
+from bookbrain.core.config import Settings
 from bookbrain.main import app
 
 
@@ -62,3 +63,22 @@ def mock_qdrant_client():
     mock_client.create_collection = MagicMock()
     mock_client.delete_collection = MagicMock()
     return mock_client
+
+
+@pytest.fixture
+def mock_settings():
+    """
+    Mock settings for parser tests.
+
+    Returns test settings and patches the global settings object.
+    """
+    test_settings = Settings(
+        storm_parse_api_key="test-api-key",
+        storm_parse_api_base_url="https://test-api.example.com/v2",
+        storm_parse_timeout=5,
+        storm_parse_poll_interval=0.1,
+        storm_parse_max_poll_attempts=10,
+    )
+
+    with patch("bookbrain.services.parser.settings", test_settings):
+        yield test_settings

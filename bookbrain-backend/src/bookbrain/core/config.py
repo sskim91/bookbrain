@@ -23,8 +23,12 @@ class Settings(BaseSettings):
     # OpenAI (for later stories)
     openai_api_key: str = ""
 
-    # Storm Parse (for later stories)
+    # Storm Parse API
     storm_parse_api_key: str = ""
+    storm_parse_api_base_url: str = "https://storm-apis.sionic.im/parse-router/api/v2"
+    storm_parse_timeout: int = 30
+    storm_parse_poll_interval: float = 2.0
+    storm_parse_max_poll_attempts: int = 150
 
 
 settings = Settings()

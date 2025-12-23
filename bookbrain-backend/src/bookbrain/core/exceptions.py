@@ -61,3 +61,32 @@ class ConnectionError(DatabaseError):
     """Raised when database connection fails."""
 
     pass
+
+
+class ParserError(BookBrainError):
+    """Base exception for parser-related errors."""
+
+    pass
+
+
+class StormParseAPIError(ParserError):
+    """Raised when Storm Parse API call fails."""
+
+    def __init__(
+        self,
+        message: str,
+        status_code: int | None = None,
+        cause: Exception | None = None,
+    ) -> None:
+        self.status_code = status_code
+        self.cause = cause
+        super().__init__(message)
+
+
+class PDFReadError(ParserError):
+    """Raised when PDF file reading fails."""
+
+    def __init__(self, file_path: str, cause: Exception | None = None) -> None:
+        self.file_path = file_path
+        self.cause = cause
+        super().__init__(f"Failed to read PDF file: {file_path}")
