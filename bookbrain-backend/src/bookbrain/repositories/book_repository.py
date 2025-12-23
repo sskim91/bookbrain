@@ -7,6 +7,7 @@ import psycopg
 from psycopg.rows import dict_row
 
 from bookbrain.core.database import get_db
+from bookbrain.core.exceptions import BookCreationError, DuplicateBookError
 
 
 class Book(TypedDict):
@@ -56,16 +57,21 @@ async def create_book(
     async def execute(
         connection: psycopg.AsyncConnection, auto_commit: bool
     ) -> int:
-        async with connection.cursor(row_factory=dict_row) as cur:
-            await cur.execute(
-                query, (title, author, file_path, total_pages, embedding_model)
-            )
-            result = await cur.fetchone()
-            if result is None:
-                raise RuntimeError("Failed to create book: no ID returned")
-            if auto_commit:
-                await connection.commit()
-            return result["id"]
+        try:
+            async with connection.cursor(row_factory=dict_row) as cur:
+                await cur.execute(
+                    query, (title, author, file_path, total_pages, embedding_model)
+                )
+                result = await cur.fetchone()
+                if result is None:
+                    raise BookCreationError("Failed to create book: no ID returned")
+                if auto_commit:
+                    await connection.commit()
+                return result["id"]
+        except psycopg.errors.UniqueViolation as e:
+            raise DuplicateBookError(file_path) from e
+        except psycopg.Error as e:
+            raise BookCreationError(f"Database error: {e}", cause=e) from e
 
     if conn is not None:
         return await execute(conn, auto_commit=False)

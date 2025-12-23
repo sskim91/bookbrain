@@ -2,8 +2,8 @@
 
 from unittest.mock import MagicMock
 
+from bookbrain.core.config import settings
 from bookbrain.core.vector_db import (
-    VECTOR_SIZE,
     delete_collection,
     ensure_collection_exists,
 )
@@ -24,7 +24,7 @@ class TestEnsureCollectionExists:
         mock_qdrant_client.create_collection.assert_called_once()
         call_args = mock_qdrant_client.create_collection.call_args
         assert call_args.kwargs["collection_name"] == "chunks"
-        assert call_args.kwargs["vectors_config"].size == VECTOR_SIZE
+        assert call_args.kwargs["vectors_config"].size == settings.vector_size
 
     def test_skips_creation_when_exists(self, mock_qdrant_client):
         """Test that collection is not created when it already exists."""
@@ -71,8 +71,8 @@ class TestDeleteCollection:
 
 
 class TestVectorSize:
-    """Tests for vector size constant."""
+    """Tests for vector size setting."""
 
     def test_vector_size_is_openai_dimension(self):
-        """Test that vector size matches OpenAI text-embedding-3."""
-        assert VECTOR_SIZE == 1536
+        """Test that vector size default matches OpenAI text-embedding-3."""
+        assert settings.vector_size == 1536

@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     # Vector Database
     qdrant_url: str = "http://localhost:6333"
     qdrant_collection: str = "chunks"
+    vector_size: int = 1536  # OpenAI text-embedding-3
 
     # OpenAI (for later stories)
     openai_api_key: str = ""

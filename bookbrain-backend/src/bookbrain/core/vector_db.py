@@ -5,9 +5,6 @@ from qdrant_client.models import Distance, VectorParams
 
 from bookbrain.core.config import settings
 
-# Vector dimension for OpenAI text-embedding-3
-VECTOR_SIZE = 1536
-
 
 def get_qdrant_client() -> QdrantClient:
     """Create a Qdrant client instance."""
@@ -34,7 +31,7 @@ def ensure_collection_exists(client: QdrantClient | None = None) -> bool:
         client.create_collection(
             collection_name=collection_name,
             vectors_config=VectorParams(
-                size=VECTOR_SIZE,
+                size=settings.vector_size,
                 distance=Distance.COSINE,
             ),
         )

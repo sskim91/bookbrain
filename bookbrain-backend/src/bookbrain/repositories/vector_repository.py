@@ -1,6 +1,7 @@
 """Repository for vector storage operations in Qdrant."""
 
 from dataclasses import dataclass
+from typing import TypedDict
 from uuid import uuid4
 
 from qdrant_client import QdrantClient
@@ -8,6 +9,15 @@ from qdrant_client.models import FieldCondition, Filter, MatchValue, PointStruct
 
 from bookbrain.core.config import settings
 from bookbrain.core.vector_db import get_qdrant_client
+
+
+class ChunkPayload(TypedDict):
+    """Type-safe payload structure for Qdrant chunks."""
+
+    book_id: int
+    page: int
+    content: str
+    model_version: str
 
 
 @dataclass
@@ -19,6 +29,15 @@ class ChunkData:
     page: int
     content: str
     model_version: str
+
+    def to_payload(self) -> ChunkPayload:
+        """Convert to Qdrant payload."""
+        return ChunkPayload(
+            book_id=self.book_id,
+            page=self.page,
+            content=self.content,
+            model_version=self.model_version,
+        )
 
 
 def store_chunks(
@@ -34,6 +53,14 @@ def store_chunks(
 
     Returns:
         Number of chunks stored
+
+    Warning:
+        This function does NOT verify that book_id exists in PostgreSQL.
+        Callers should ensure book_id validity before calling this function
+        to prevent orphaned vectors.
+
+    TODO: Consider adding book_id validation or moving this responsibility
+          to a service layer that coordinates between PostgreSQL and Qdrant.
     """
     if not chunks:
         return 0
@@ -45,12 +72,7 @@ def store_chunks(
         PointStruct(
             id=str(uuid4()),
             vector=chunk.vector,
-            payload={
-                "book_id": chunk.book_id,
-                "page": chunk.page,
-                "content": chunk.content,
-                "model_version": chunk.model_version,
-            },
+            payload=chunk.to_payload(),
         )
         for chunk in chunks
     ]

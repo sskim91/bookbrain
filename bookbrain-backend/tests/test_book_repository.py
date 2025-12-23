@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from bookbrain.core.exceptions import BookCreationError
 from bookbrain.repositories.book_repository import (
     create_book,
     delete_book,
@@ -61,7 +62,7 @@ class TestCreateBook:
         """Test that create_book raises when no ID is returned."""
         mock_db_cursor.fetchone.return_value = None
 
-        with pytest.raises(RuntimeError, match="Failed to create book"):
+        with pytest.raises(BookCreationError, match="Failed to create book"):
             await create_book(
                 title="Test Book",
                 file_path="/path/to/test.pdf",
