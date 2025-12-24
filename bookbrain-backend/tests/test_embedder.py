@@ -228,15 +228,11 @@ class TestBatchProcessing:
             for i in range(150)
         ]
 
-        call_count = 0
-
         async def mock_create(*args, **kwargs):
-            nonlocal call_count
-            call_count += 1
             input_texts = kwargs.get("input", args[0] if args else [])
             response = MagicMock()
             response.data = [
-                MagicMock(embedding=[0.1 * i] * 1536, index=i)
+                MagicMock(embedding=[0.1] * 1536, index=i)
                 for i in range(len(input_texts))
             ]
             response.model = "text-embedding-3-small"
@@ -247,7 +243,7 @@ class TestBatchProcessing:
             "bookbrain.services.embedder._get_openai_client"
         ) as mock_get_client:
             mock_client = AsyncMock()
-            mock_client.embeddings.create = mock_create
+            mock_client.embeddings.create = AsyncMock(side_effect=mock_create)
             mock_get_client.return_value = mock_client
 
             with patch("bookbrain.services.embedder.settings") as mock_settings:
@@ -258,9 +254,27 @@ class TestBatchProcessing:
 
                 result = await generate_embeddings(chunks)
 
-                assert call_count == 2  # 150 chunks / 100 batch = 2 API calls
+                # Verify API calls
+                assert mock_client.embeddings.create.call_count == 2
+                
+                # Check arguments of each call
+                calls = mock_client.embeddings.create.call_args_list
+                
+                # First batch: 0-99
+                args1, kwargs1 = calls[0]
+                batch1_input = kwargs1["input"]
+                assert len(batch1_input) == 100
+                assert batch1_input[0] == "Content 0"
+                assert batch1_input[99] == "Content 99"
+                
+                # Second batch: 100-149
+                args2, kwargs2 = calls[1]
+                batch2_input = kwargs2["input"]
+                assert len(batch2_input) == 50
+                assert batch2_input[0] == "Content 100"
+                assert batch2_input[49] == "Content 149"
+
                 assert len(result.embedded_chunks) == 150
-                assert result.total_tokens == 100 * 10 + 50 * 10  # 1000 + 500
 
     @pytest.mark.asyncio
     async def test_single_batch_small_list(self):

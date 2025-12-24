@@ -1,5 +1,7 @@
 """Indexer service for the book indexing pipeline."""
 
+import logging
+
 from pydantic import BaseModel
 
 from bookbrain.core.exceptions import IndexingError
@@ -11,6 +13,8 @@ from bookbrain.repositories.vector_repository import (
     store_chunks,
 )
 from bookbrain.services.embedder import generate_embeddings
+
+logger = logging.getLogger(__name__)
 
 
 class IndexingResult(BaseModel):
@@ -92,8 +96,10 @@ async def index_book(
         # Rollback: Delete any chunks that may have been stored
         try:
             delete_chunks_by_book_id(book_id)
-        except Exception:
-            pass  # Ignore cleanup errors
+        except Exception as cleanup_error:
+            logger.error(
+                f"Failed to rollback (delete chunks) for book {book_id}: {cleanup_error}"
+            )
 
         if isinstance(e, IndexingError):
             raise
