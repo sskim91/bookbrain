@@ -188,3 +188,59 @@ async def delete_book(
 
     async with get_db() as connection:
         return await execute(connection, auto_commit=True)
+
+
+async def update_book_embedding_model(
+    book_id: int,
+    embedding_model: str,
+    total_pages: int | None = None,
+    conn: psycopg.AsyncConnection | None = None,
+) -> bool:
+    """
+    Update the embedding model version (and optionally total_pages) for a book.
+
+    Args:
+        book_id: The book ID to update
+        embedding_model: The embedding model version used
+        total_pages: Total number of pages (optional)
+        conn: Optional existing database connection (caller manages transaction)
+
+    Returns:
+        True if the book was updated, False if not found
+
+    Note:
+        If conn is provided, the caller is responsible for committing.
+        If conn is None, this function commits automatically.
+    """
+    if total_pages is not None:
+        query = """
+            UPDATE books
+            SET embedding_model = %s, total_pages = %s
+            WHERE id = %s
+            RETURNING id
+        """
+        params = (embedding_model, total_pages, book_id)
+    else:
+        query = """
+            UPDATE books
+            SET embedding_model = %s
+            WHERE id = %s
+            RETURNING id
+        """
+        params = (embedding_model, book_id)
+
+    async def execute(
+        connection: psycopg.AsyncConnection, auto_commit: bool
+    ) -> bool:
+        async with connection.cursor(row_factory=dict_row) as cur:
+            await cur.execute(query, params)
+            result = await cur.fetchone()
+            if auto_commit:
+                await connection.commit()
+            return result is not None
+
+    if conn is not None:
+        return await execute(conn, auto_commit=False)
+
+    async with get_db() as connection:
+        return await execute(connection, auto_commit=True)

@@ -90,3 +90,26 @@ class PDFReadError(ParserError):
         self.file_path = file_path
         self.cause = cause
         super().__init__(f"Failed to read PDF file: {file_path}")
+
+
+class EmbeddingError(BookBrainError):
+    """Raised when embedding generation fails."""
+
+    def __init__(self, message: str, cause: Exception | None = None) -> None:
+        self.cause = cause
+        super().__init__(message)
+
+
+class OpenAIKeyMissingError(EmbeddingError):
+    """Raised when OpenAI API key is not configured."""
+
+    def __init__(self) -> None:
+        super().__init__("OpenAI API key is not configured")
+
+
+class IndexingError(BookBrainError):
+    """Raised when book indexing fails."""
+
+    def __init__(self, message: str, cause: Exception | None = None) -> None:
+        self.cause = cause
+        super().__init__(message)

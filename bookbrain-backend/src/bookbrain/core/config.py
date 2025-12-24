@@ -20,8 +20,12 @@ class Settings(BaseSettings):
     qdrant_collection: str = "chunks"
     vector_size: int = 1536  # OpenAI text-embedding-3
 
-    # OpenAI (for later stories)
+    # OpenAI
     openai_api_key: str = ""
+    embedding_model: str = "text-embedding-3-small"
+    embedding_batch_size: int = 100
+    embedding_max_retries: int = 3
+    embedding_retry_base_delay: float = 1.0
 
     # Storm Parse API
     storm_parse_api_key: str = ""

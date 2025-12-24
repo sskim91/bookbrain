@@ -241,6 +241,6 @@ class TestChunkText:
         assert result.chunks[0].page_number == 1
         assert result.chunks[-1].page_number == 500
 
-        # Performance check - should be very fast (< 2 seconds usually, definitely < 10s)
+        # Performance check - should be fast (< 2s usually, definitely < 10s).
         # The O(N^2) version would take minutes.
         assert duration < 10.0, f"Chunking took too long: {duration:.2f}s"

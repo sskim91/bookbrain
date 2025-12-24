@@ -44,9 +44,8 @@ async def parse_pdf(file_path: str, language: str = "ko") -> ParsedDocument:
     if not path.is_file():
         raise PDFReadError(file_path)
 
-    # Submit parse request and get jobId
-    # We pass the Path object directly to handle file opening inside _submit_parse_request
-    # to better support streaming and retries
+    # Submit parse request and get jobId.
+    # Path object passed to handle file opening inside _submit_parse_request.
     job_id = await _submit_parse_request(path, language)
 
     # Poll for result until completion
