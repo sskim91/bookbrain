@@ -76,9 +76,22 @@ class TestUploadBook:
 
     def test_upload_invalid_content_type(self):
         """Test rejection of invalid content type."""
+        # Use valid PDF magic number but wrong content type
         response = client.post(
             "/api/books",
-            files={"file": ("test.pdf", b"not a pdf", "image/png")},
+            files={"file": ("test.pdf", b"%PDF-1.4 content", "image/png")},
+        )
+
+        assert response.status_code == 400
+        data = response.json()
+        assert data["detail"]["error"]["code"] == "INVALID_FILE_FORMAT"
+
+    def test_upload_invalid_magic_number(self):
+        """Test rejection of file with wrong magic number (security check)."""
+        # File has .pdf extension and correct content-type but wrong header
+        response = client.post(
+            "/api/books",
+            files={"file": ("malicious.pdf", b"not a real pdf", "application/pdf")},
         )
 
         assert response.status_code == 400

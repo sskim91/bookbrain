@@ -30,9 +30,12 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/books", tags=["books"])
 
 
+CHUNK_SIZE = 64 * 1024  # 64KB chunks for streaming file writes
+
+
 async def save_uploaded_file(file: UploadFile) -> str:
     """
-    Save uploaded file to disk.
+    Save uploaded file to disk using streaming to avoid memory exhaustion.
 
     Args:
         file: The uploaded file
@@ -46,15 +49,26 @@ async def save_uploaded_file(file: UploadFile) -> str:
     file_id = str(uuid.uuid4())
     file_path = storage_dir / f"{file_id}.pdf"
 
-    content = await file.read()
-    file_path.write_bytes(content)
+    # Stream file to disk in chunks to avoid loading entire file into memory
+    with open(file_path, "wb") as f:
+        while chunk := await file.read(CHUNK_SIZE):
+            f.write(chunk)
 
     return str(file_path)
 
 
-def validate_pdf_file(file: UploadFile) -> None:
+# PDF Magic Number (file signature)
+PDF_MAGIC_NUMBER = b"%PDF-"
+
+
+async def validate_pdf_file(file: UploadFile) -> None:
     """
     Validate that the uploaded file is a PDF.
+
+    Performs three levels of validation:
+    1. File extension check
+    2. Content-Type header check
+    3. Magic Number (file header) check for security
 
     Args:
         file: The uploaded file
@@ -75,12 +89,24 @@ def validate_pdf_file(file: UploadFile) -> None:
         if content_type != "application/octet-stream":
             raise InvalidFileFormatError(filename)
 
+    # Check Magic Number (file header) - most reliable check
+    header = await file.read(len(PDF_MAGIC_NUMBER))
+    await file.seek(0)  # Reset file position for subsequent reads
+
+    if not header.startswith(PDF_MAGIC_NUMBER):
+        raise InvalidFileFormatError(filename)
+
+
+# Validation constants
+MAX_TITLE_LENGTH = 500
+MAX_AUTHOR_LENGTH = 200
+
 
 @router.post("", response_model=IndexingResponse)
 async def upload_book(
     file: UploadFile = File(...),
-    title: str | None = Form(None),
-    author: str | None = Form(None),
+    title: str | None = Form(None, max_length=MAX_TITLE_LENGTH),
+    author: str | None = Form(None, max_length=MAX_AUTHOR_LENGTH),
 ) -> IndexingResponse:
     """
     Upload a PDF and index it.
@@ -107,8 +133,8 @@ async def upload_book(
     book_id: int | None = None
 
     try:
-        # 1. Validate file format
-        validate_pdf_file(file)
+        # 1. Validate file format (async for Magic Number check)
+        await validate_pdf_file(file)
 
         # 2. Save file to disk
         file_path = await save_uploaded_file(file)
