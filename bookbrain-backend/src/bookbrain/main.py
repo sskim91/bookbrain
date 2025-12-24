@@ -2,14 +2,14 @@
 
 from fastapi import FastAPI
 
+from bookbrain.api.routes import books, health
+
 app = FastAPI(
     title="BookBrain API",
     description="Personal Knowledge Search System using LLM + RAG",
     version="0.1.0",
 )
 
-
-@app.get("/api/health")
-async def health_check() -> dict:
-    """Health check endpoint."""
-    return {"status": "healthy"}
+# Register routers
+app.include_router(health.router)
+app.include_router(books.router)

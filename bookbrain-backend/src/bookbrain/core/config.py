@@ -34,5 +34,10 @@ class Settings(BaseSettings):
     storm_parse_poll_interval: float = 2.0
     storm_parse_max_poll_attempts: int = 150
 
+    # File storage
+    data_dir: str = "data"
+    pdf_storage_dir: str = "data/pdfs"
+    max_upload_size: int = 100 * 1024 * 1024  # 100MB
+
 
 settings = Settings()

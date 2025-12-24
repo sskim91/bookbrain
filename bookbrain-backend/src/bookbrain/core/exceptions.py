@@ -113,3 +113,12 @@ class IndexingError(BookBrainError):
     def __init__(self, message: str, cause: Exception | None = None) -> None:
         self.cause = cause
         super().__init__(message)
+
+
+class InvalidFileFormatError(BookBrainError):
+    """Raised when uploaded file has invalid format."""
+
+    def __init__(self, filename: str, expected_format: str = "PDF") -> None:
+        self.filename = filename
+        self.expected_format = expected_format
+        super().__init__(f"Invalid file format: {filename}. Expected: {expected_format}")
