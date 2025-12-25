@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class BookBase(BaseModel):
@@ -59,3 +59,32 @@ class DeleteResponse(BaseModel):
     """Delete operation response."""
 
     deleted: bool
+
+
+# Search schemas (Story 2.1)
+class SearchRequest(BaseModel):
+    """Search request schema."""
+
+    query: str = Field(..., min_length=1, max_length=500)
+    limit: int = Field(default=10, ge=1, le=50)
+    offset: int = Field(default=0, ge=0)
+    min_score: float | None = Field(default=None, ge=0.0, le=1.0)
+
+
+class SearchResultItem(BaseModel):
+    """Single search result item."""
+
+    book_id: int
+    title: str
+    author: str | None
+    page: int
+    content: str
+    score: float  # 0.0 ~ 1.0 (Qdrant similarity score)
+
+
+class SearchResponse(BaseModel):
+    """Search response schema."""
+
+    results: list[SearchResultItem]
+    total: int
+    query_time_ms: float

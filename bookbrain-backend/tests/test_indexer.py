@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from bookbrain.core.config import settings
 from bookbrain.core.exceptions import EmbeddingError, IndexingError
 from bookbrain.models.chunker import Chunk, ChunkedDocument
 from bookbrain.models.embedder import EmbeddedChunk, EmbeddingResult
@@ -32,7 +33,7 @@ class TestIndexBook:
         """Create a mock embedding result."""
         return EmbeddingResult(
             embedded_chunks=[
-                EmbeddedChunk(chunk=chunk, vector=[0.1] * 1536)
+                EmbeddedChunk(chunk=chunk, vector=[0.1] * settings.vector_size)
                 for chunk in sample_chunked_document.chunks
             ],
             model_version="text-embedding-3-small",
@@ -235,7 +236,7 @@ class TestIndexBook:
                         assert chunk_data.page == expected_chunk.page_number
                         assert chunk_data.content == expected_chunk.content
                         assert chunk_data.model_version == "text-embedding-3-small"
-                        assert len(chunk_data.vector) == 1536
+                        assert len(chunk_data.vector) == settings.vector_size
 
 
 class TestIndexingResult:

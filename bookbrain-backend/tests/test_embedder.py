@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from bookbrain.core.config import settings
 from bookbrain.core.exceptions import EmbeddingError, OpenAIKeyMissingError
 from bookbrain.models.chunker import Chunk
 from bookbrain.services.embedder import generate_embeddings
@@ -26,9 +27,9 @@ class TestGenerateEmbeddings:
         """Create mock OpenAI embeddings response."""
         response = MagicMock()
         response.data = [
-            MagicMock(embedding=[0.1] * 1536, index=0),
-            MagicMock(embedding=[0.2] * 1536, index=1),
-            MagicMock(embedding=[0.3] * 1536, index=2),
+            MagicMock(embedding=[0.1] * settings.vector_size, index=0),
+            MagicMock(embedding=[0.2] * settings.vector_size, index=1),
+            MagicMock(embedding=[0.3] * settings.vector_size, index=2),
         ]
         response.model = "text-embedding-3-small"
         response.usage = MagicMock(total_tokens=100)
@@ -55,7 +56,7 @@ class TestGenerateEmbeddings:
             # Verify each embedded chunk
             for i, ec in enumerate(result.embedded_chunks):
                 assert ec.chunk == sample_chunks[i]
-                assert len(ec.vector) == 1536
+                assert len(ec.vector) == settings.vector_size
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_empty_list(self):
@@ -109,7 +110,7 @@ class TestGenerateEmbeddings:
             result = await generate_embeddings(sample_chunks)
 
             for ec in result.embedded_chunks:
-                assert len(ec.vector) == 1536
+                assert len(ec.vector) == settings.vector_size
 
 
 class TestEmbedderRetryLogic:
@@ -126,7 +127,7 @@ class TestEmbedderRetryLogic:
         from openai import RateLimitError
 
         mock_response = MagicMock()
-        mock_response.data = [MagicMock(embedding=[0.1] * 1536, index=0)]
+        mock_response.data = [MagicMock(embedding=[0.1] * settings.vector_size, index=0)]
         mock_response.model = "text-embedding-3-small"
         mock_response.usage = MagicMock(total_tokens=10)
 
@@ -232,7 +233,7 @@ class TestBatchProcessing:
             input_texts = kwargs.get("input", args[0] if args else [])
             response = MagicMock()
             response.data = [
-                MagicMock(embedding=[0.1] * 1536, index=i)
+                MagicMock(embedding=[0.1] * settings.vector_size, index=i)
                 for i in range(len(input_texts))
             ]
             response.model = "text-embedding-3-small"
@@ -291,7 +292,7 @@ class TestBatchProcessing:
             call_count += 1
             response = MagicMock()
             response.data = [
-                MagicMock(embedding=[0.1] * 1536, index=i) for i in range(10)
+                MagicMock(embedding=[0.1] * settings.vector_size, index=i) for i in range(10)
             ]
             response.model = "text-embedding-3-small"
             response.usage = MagicMock(total_tokens=50)

@@ -2,10 +2,13 @@
 
 from unittest.mock import MagicMock
 
+from bookbrain.core.config import settings
 from bookbrain.repositories.vector_repository import (
     ChunkData,
+    ChunkSearchResult,
     delete_chunks_by_book_id,
     get_chunks_by_book_id,
+    search_similar_chunks,
     store_chunks,
 )
 
@@ -24,7 +27,7 @@ class TestStoreChunks:
         """Test storing a single chunk."""
         chunks = [
             ChunkData(
-                vector=[0.1] * 1536,
+                vector=[0.1] * settings.vector_size,
                 book_id=1,
                 page=42,
                 content="Test content",
@@ -44,7 +47,7 @@ class TestStoreChunks:
         """Test storing multiple chunks."""
         chunks = [
             ChunkData(
-                vector=[0.1] * 1536,
+                vector=[0.1] * settings.vector_size,
                 book_id=1,
                 page=i,
                 content=f"Content {i}",
@@ -63,7 +66,7 @@ class TestStoreChunks:
         """Test that stored chunks have correct payload structure."""
         chunks = [
             ChunkData(
-                vector=[0.5] * 1536,
+                vector=[0.5] * settings.vector_size,
                 book_id=42,
                 page=10,
                 content="Important text",
@@ -138,3 +141,108 @@ class TestGetChunksByBookId:
         scroll_filter = call_args.kwargs["scroll_filter"]
         assert scroll_filter.must[0].key == "book_id"
         assert scroll_filter.must[0].match.value == 42
+
+
+class TestSearchSimilarChunks:
+    """Tests for search_similar_chunks function."""
+
+    def test_search_empty_results(self, mock_qdrant_client):
+        """Test search with no results."""
+        mock_result = MagicMock()
+        mock_result.points = []
+        mock_qdrant_client.query_points.return_value = mock_result
+
+        results = search_similar_chunks(
+            query_vector=[0.1] * settings.vector_size,
+            limit=10,
+            client=mock_qdrant_client,
+        )
+
+        assert results == []
+
+    def test_search_with_results(self, mock_qdrant_client):
+        """Test search returns ChunkSearchResult objects."""
+        mock_point1 = MagicMock()
+        mock_point1.id = "uuid-1"
+        mock_point1.score = 0.85
+        mock_point1.payload = {
+            "book_id": 1,
+            "page": 10,
+            "content": "Relevant content",
+        }
+
+        mock_point2 = MagicMock()
+        mock_point2.id = "uuid-2"
+        mock_point2.score = 0.75
+        mock_point2.payload = {
+            "book_id": 2,
+            "page": 20,
+            "content": "Another match",
+        }
+
+        mock_result = MagicMock()
+        mock_result.points = [mock_point1, mock_point2]
+        mock_qdrant_client.query_points.return_value = mock_result
+
+        results = search_similar_chunks(
+            query_vector=[0.1] * settings.vector_size,
+            limit=10,
+            client=mock_qdrant_client,
+        )
+
+        assert len(results) == 2
+        assert isinstance(results[0], ChunkSearchResult)
+        assert results[0].id == "uuid-1"
+        assert results[0].book_id == 1
+        assert results[0].page == 10
+        assert results[0].content == "Relevant content"
+        assert results[0].score == 0.85
+
+    def test_search_calls_query_points_correctly(self, mock_qdrant_client):
+        """Test that query_points is called with correct parameters."""
+        mock_result = MagicMock()
+        mock_result.points = []
+        mock_qdrant_client.query_points.return_value = mock_result
+
+        query_vec = [0.5] * settings.vector_size
+        search_similar_chunks(
+            query_vector=query_vec,
+            limit=5,
+            client=mock_qdrant_client,
+        )
+
+        mock_qdrant_client.query_points.assert_called_once()
+        call_args = mock_qdrant_client.query_points.call_args
+        assert call_args.kwargs["collection_name"] == "chunks"
+        assert call_args.kwargs["query"] == query_vec
+        assert call_args.kwargs["limit"] == 5
+        assert call_args.kwargs["with_payload"] is True
+
+    def test_search_filters_points_without_payload(self, mock_qdrant_client):
+        """Test that points without payload are filtered out."""
+        mock_point1 = MagicMock()
+        mock_point1.id = "uuid-1"
+        mock_point1.score = 0.85
+        mock_point1.payload = {
+            "book_id": 1,
+            "page": 10,
+            "content": "Valid content",
+        }
+
+        mock_point2 = MagicMock()
+        mock_point2.id = "uuid-2"
+        mock_point2.score = 0.75
+        mock_point2.payload = None  # No payload
+
+        mock_result = MagicMock()
+        mock_result.points = [mock_point1, mock_point2]
+        mock_qdrant_client.query_points.return_value = mock_result
+
+        results = search_similar_chunks(
+            query_vector=[0.1] * settings.vector_size,
+            limit=10,
+            client=mock_qdrant_client,
+        )
+
+        assert len(results) == 1
+        assert results[0].id == "uuid-1"

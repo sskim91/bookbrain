@@ -155,3 +155,59 @@ def get_chunks_by_book_id(
 
     points, _ = results
     return [point.payload for point in points if point.payload]
+
+
+@dataclass
+class ChunkSearchResult:
+    """Search result from vector DB."""
+
+    id: str
+    book_id: int
+    page: int
+    content: str
+    score: float
+
+
+def search_similar_chunks(
+    query_vector: list[float],
+    limit: int = 10,
+    offset: int = 0,
+    score_threshold: float | None = None,
+    client: QdrantClient | None = None,
+) -> list[ChunkSearchResult]:
+    """
+    Search for similar chunks using vector similarity.
+
+    Args:
+        query_vector: 1536-dim embedding vector
+        limit: Maximum results
+        offset: Number of results to skip (for pagination)
+        score_threshold: Minimum similarity score (0.0-1.0)
+        client: Optional Qdrant client
+
+    Returns:
+        List of ChunkSearchResult with score
+    """
+    if client is None:
+        client = get_qdrant_client()
+
+    results = client.query_points(
+        collection_name=settings.qdrant_collection,
+        query=query_vector,
+        limit=limit,
+        offset=offset,
+        score_threshold=score_threshold,
+        with_payload=True,
+    )
+
+    return [
+        ChunkSearchResult(
+            id=str(point.id),
+            book_id=point.payload.get("book_id"),
+            page=point.payload.get("page"),
+            content=point.payload.get("content"),
+            score=point.score,
+        )
+        for point in results.points
+        if point.payload
+    ]

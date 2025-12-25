@@ -126,3 +126,21 @@ async def generate_embeddings(chunks: list[Chunk]) -> EmbeddingResult:
         model_version=model_version,
         total_tokens=total_tokens,
     )
+
+
+async def generate_embedding(text: str) -> list[float]:
+    """
+    Generate embedding for a single text string.
+
+    Args:
+        text: Text string to embed
+
+    Returns:
+        1536-dimensional embedding vector
+
+    Raises:
+        OpenAIKeyMissingError: If OpenAI API key is not configured
+        EmbeddingError: If embedding generation fails
+    """
+    embeddings, _, _ = await _call_embeddings_api([text])
+    return embeddings[0]

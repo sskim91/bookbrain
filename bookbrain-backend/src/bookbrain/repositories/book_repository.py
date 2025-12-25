@@ -113,6 +113,43 @@ async def get_book(
         return await execute(connection)
 
 
+async def get_books_by_ids(
+    book_ids: list[int],
+    conn: psycopg.AsyncConnection | None = None,
+) -> dict[int, Book]:
+    """
+    Get multiple books by their IDs in a single query.
+
+    Args:
+        book_ids: List of book IDs to fetch
+        conn: Optional existing database connection
+
+    Returns:
+        Dictionary mapping book_id to Book record (missing IDs not included)
+    """
+    if not book_ids:
+        return {}
+
+    # Use ANY() for efficient batch lookup
+    query = """
+        SELECT id, title, author, file_path, total_pages, embedding_model, created_at
+        FROM books
+        WHERE id = ANY(%s)
+    """
+
+    async def execute(connection: psycopg.AsyncConnection) -> dict[int, Book]:
+        async with connection.cursor(row_factory=dict_row) as cur:
+            await cur.execute(query, (book_ids,))
+            results = await cur.fetchall()
+            return {row["id"]: dict(row) for row in results}
+
+    if conn is not None:
+        return await execute(conn)
+
+    async with get_db() as connection:
+        return await execute(connection)
+
+
 async def get_books(
     limit: int = 100,
     offset: int = 0,
