@@ -104,8 +104,11 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+/lib/
 lib64/
+# But allow frontend lib directories
+!bookbrain-frontend/src/lib/
+!bookbrain-frontend/tests/lib/
 parts/
 sdist/
 var/

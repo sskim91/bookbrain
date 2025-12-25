@@ -1,26 +1,29 @@
 import type { SearchResultItem } from '@/types';
 import { STRINGS } from '@/constants/strings';
+import { SearchResultCard } from './SearchResultCard';
 
 interface SearchResultListProps {
   results: SearchResultItem[];
   isLoading?: boolean;
   hasSearched?: boolean;
+  onResultClick?: (result: SearchResultItem) => void;
 }
 
 export function SearchResultList({
   results,
   isLoading = false,
   hasSearched = false,
+  onResultClick,
 }: SearchResultListProps) {
   // Before any search, show nothing
   if (!hasSearched && !isLoading) {
     return null;
   }
 
-  // Loading state - will be implemented in future story
+  // Loading state - will be enhanced in Story 2.4 with skeleton
   if (isLoading) {
     return (
-      <div className="w-full max-w-[600px] mt-8">
+      <div className="w-full max-w-[800px] mt-8">
         <div className="text-center text-muted-foreground">
           {STRINGS.SEARCH_LOADING}
         </div>
@@ -31,7 +34,7 @@ export function SearchResultList({
   // Empty results after search
   if (results.length === 0) {
     return (
-      <div className="w-full max-w-[600px] mt-8">
+      <div className="w-full max-w-[800px] mt-8">
         <div className="text-center text-muted-foreground">
           {STRINGS.SEARCH_NO_RESULTS}
         </div>
@@ -39,24 +42,15 @@ export function SearchResultList({
     );
   }
 
-  // Results list - placeholder for future story (2.3)
+  // Results list with SearchResultCard components
   return (
-    <div className="w-full max-w-[600px] mt-8 space-y-3">
+    <div className="w-full max-w-[800px] mt-8 flex flex-col gap-3">
       {results.map((result, index) => (
-        <div
+        <SearchResultCard
           key={`${result.book_id}-${result.page}-${index}`}
-          className="p-4 border border-border rounded-lg bg-card"
-        >
-          <div className="flex justify-between items-start mb-2">
-            <div className="font-medium text-foreground">{result.title}</div>
-            <div className="text-sm text-muted-foreground">
-              p.{result.page}
-            </div>
-          </div>
-          <div className="text-sm text-muted-foreground line-clamp-2">
-            {result.content}
-          </div>
-        </div>
+          result={result}
+          onClick={onResultClick ? () => onResultClick(result) : undefined}
+        />
       ))}
     </div>
   );

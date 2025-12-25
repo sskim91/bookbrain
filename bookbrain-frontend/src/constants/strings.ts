@@ -16,4 +16,15 @@ export const STRINGS = {
   // Theme
   THEME_SWITCH_TO_LIGHT: 'Switch to light mode',
   THEME_SWITCH_TO_DARK: 'Switch to dark mode',
+
+  // Copy
+  COPY: 'Copy',
+  COPYING: 'Copying...',
+  COPIED: 'Copied',
+  COPY_BUTTON_LABEL: '마크다운으로 복사',
+  TOAST_COPIED: '복사됨',
+  TOAST_COPY_FAILED: '복사에 실패했습니다',
+
+  // Score
+  SCORE_ARIA_LABEL: (percent: number) => `유사도 ${percent}%`,
 } as const;
