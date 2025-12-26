@@ -37,4 +37,11 @@ export const STRINGS = {
   // Detail Dialog
   DIALOG_DESCRIPTION_SUFFIX: '의 상세 내용',
   DIALOG_CLOSE: '닫기',
+
+  // Command Palette
+  COMMAND_PALETTE_TITLE: '책 검색',
+  COMMAND_PALETTE_PLACEHOLDER: '검색...',
+  COMMAND_PALETTE_DESCRIPTION: '검색어를 입력하여 책 내용을 찾으세요',
+  COMMAND_PALETTE_EMPTY: '검색 결과가 없습니다',
+  COMMAND_PALETTE_LOADING: '검색 중...',
 } as const;

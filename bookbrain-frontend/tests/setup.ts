@@ -15,3 +15,14 @@ vi.mock('next-themes', () => ({
   }),
   ThemeProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
+
+// Mock ResizeObserver for cmdk and other components that need it
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+global.ResizeObserver = ResizeObserverMock;
+
+// Mock Element.scrollIntoView for cmdk keyboard navigation
+Element.prototype.scrollIntoView = vi.fn();
