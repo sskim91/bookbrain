@@ -8,7 +8,13 @@ export const STRINGS = {
   SEARCH_PLACEHOLDER: '책 내용을 검색하세요...',
   SEARCH_ARIA_LABEL: '책 내용 검색',
   SEARCH_LOADING: '검색 중...',
-  SEARCH_NO_RESULTS: '검색 결과가 없습니다. 다른 키워드로 시도해보세요.',
+  SEARCH_NO_RESULTS: '검색 결과가 없습니다',
+  SEARCH_NO_RESULTS_HINT: '다른 키워드로 시도해보세요',
+  SEARCH_ERROR: '검색 중 오류가 발생했습니다',
+  SEARCH_ERROR_HINT: '잠시 후 다시 시도해주세요',
+  SEARCH_EMPTY_QUERY: '검색어를 입력해주세요',
+  SEARCH_RESULTS_META: (total: number, timeMs: number) =>
+    `${total}건, ${(timeMs / 1000).toFixed(2)}초`,
 
   // Header
   APP_NAME: 'bookbrain',

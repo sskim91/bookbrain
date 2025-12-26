@@ -22,11 +22,14 @@ describe('SearchResultList', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('shows loading state when isLoading is true', () => {
+  it('shows loading state with skeleton cards when isLoading is true', () => {
     render(
       <SearchResultList results={[]} hasSearched={true} isLoading={true} />
     );
-    expect(screen.getByText(STRINGS.SEARCH_LOADING)).toBeInTheDocument();
+    // Should show skeleton loading state with role="status"
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    // Should have skeleton cards (3 by default)
+    expect(screen.getByLabelText('검색 결과 로딩 중')).toBeInTheDocument();
   });
 
   it('shows empty message when no results after search', () => {
@@ -34,6 +37,7 @@ describe('SearchResultList', () => {
       <SearchResultList results={[]} hasSearched={true} isLoading={false} />
     );
     expect(screen.getByText(STRINGS.SEARCH_NO_RESULTS)).toBeInTheDocument();
+    expect(screen.getByText(STRINGS.SEARCH_NO_RESULTS_HINT)).toBeInTheDocument();
   });
 
   it('renders results using SearchResultCard components', () => {
@@ -179,5 +183,96 @@ describe('SearchResultList', () => {
     );
 
     expect(screen.getByRole('article')).toBeInTheDocument();
+  });
+
+  it('displays search meta info when total and queryTimeMs are provided', () => {
+    const mockResults: SearchResultItem[] = [
+      {
+        book_id: 1,
+        title: 'Test',
+        author: null,
+        page: 1,
+        content: 'Content',
+        score: 0.5,
+      },
+    ];
+
+    render(
+      <SearchResultList
+        results={mockResults}
+        hasSearched={true}
+        isLoading={false}
+        total={5}
+        queryTimeMs={234}
+      />
+    );
+
+    // STRINGS.SEARCH_RESULTS_META(5, 234) returns "5건, 0.23초"
+    expect(screen.getByText('5건, 0.23초')).toBeInTheDocument();
+  });
+
+  it('does not display search meta when not provided', () => {
+    const mockResults: SearchResultItem[] = [
+      {
+        book_id: 1,
+        title: 'Test',
+        author: null,
+        page: 1,
+        content: 'Content',
+        score: 0.5,
+      },
+    ];
+
+    render(
+      <SearchResultList
+        results={mockResults}
+        hasSearched={true}
+        isLoading={false}
+      />
+    );
+
+    // Should not have any "건" text when meta not provided
+    expect(screen.queryByText(/건,/)).not.toBeInTheDocument();
+  });
+
+  it('shows error UI when isError is true', () => {
+    render(
+      <SearchResultList
+        results={[]}
+        hasSearched={true}
+        isLoading={false}
+        isError={true}
+      />
+    );
+
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByText(STRINGS.SEARCH_ERROR)).toBeInTheDocument();
+    expect(screen.getByText(STRINGS.SEARCH_ERROR_HINT)).toBeInTheDocument();
+  });
+
+  it('hides results and shows error UI when isError is true even with data', () => {
+    const mockResults: SearchResultItem[] = [
+      {
+        book_id: 1,
+        title: 'Stale Result',
+        author: null,
+        page: 1,
+        content: 'This should not be visible',
+        score: 0.5,
+      },
+    ];
+
+    render(
+      <SearchResultList
+        results={mockResults}
+        hasSearched={true}
+        isLoading={false}
+        isError={true}
+      />
+    );
+
+    // Should show error UI, not the stale results
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByText('Stale Result')).not.toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import { STRINGS } from '@/constants/strings';
 
 interface SearchInputProps {
@@ -27,7 +27,7 @@ export function SearchInput({
   }, [autoFocus]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && value.trim()) {
+    if (e.key === 'Enter') {
       onSearch();
     }
   };
@@ -42,10 +42,14 @@ export function SearchInput({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={STRINGS.SEARCH_PLACEHOLDER}
-        className="pl-12 h-12 text-lg"
+        className="pl-12 pr-12 h-12 text-lg"
         disabled={isLoading}
         aria-label={STRINGS.SEARCH_ARIA_LABEL}
+        aria-busy={isLoading}
       />
+      {isLoading && (
+        <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />
+      )}
     </div>
   );
 }

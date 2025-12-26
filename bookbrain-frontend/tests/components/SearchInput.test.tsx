@@ -75,7 +75,7 @@ describe('SearchInput', () => {
     expect(onSearch).toHaveBeenCalledTimes(1);
   });
 
-  it('does not call onSearch when Enter is pressed with empty value', async () => {
+  it('calls onSearch when Enter is pressed with empty value (validation handled by parent)', async () => {
     const user = userEvent.setup();
     const onSearch = vi.fn();
     render(
@@ -86,7 +86,8 @@ describe('SearchInput', () => {
     await user.click(input);
     await user.keyboard('{Enter}');
 
-    expect(onSearch).not.toHaveBeenCalled();
+    // onSearch is called, parent handles validation
+    expect(onSearch).toHaveBeenCalledTimes(1);
   });
 
   it('disables input when isLoading is true', () => {
@@ -100,6 +101,51 @@ describe('SearchInput', () => {
     );
 
     expect(screen.getByLabelText(STRINGS.SEARCH_ARIA_LABEL)).toBeDisabled();
+  });
+
+  it('shows loading spinner when isLoading is true', () => {
+    const { container } = render(
+      <SearchInput
+        value=""
+        onChange={vi.fn()}
+        onSearch={vi.fn()}
+        isLoading={true}
+      />
+    );
+
+    // Should have a spinning loader element
+    const spinner = container.querySelector('.animate-spin');
+    expect(spinner).toBeInTheDocument();
+  });
+
+  it('does not show spinner when isLoading is false', () => {
+    const { container } = render(
+      <SearchInput
+        value=""
+        onChange={vi.fn()}
+        onSearch={vi.fn()}
+        isLoading={false}
+      />
+    );
+
+    const spinner = container.querySelector('.animate-spin');
+    expect(spinner).not.toBeInTheDocument();
+  });
+
+  it('has aria-busy attribute when loading', () => {
+    render(
+      <SearchInput
+        value=""
+        onChange={vi.fn()}
+        onSearch={vi.fn()}
+        isLoading={true}
+      />
+    );
+
+    expect(screen.getByLabelText(STRINGS.SEARCH_ARIA_LABEL)).toHaveAttribute(
+      'aria-busy',
+      'true'
+    );
   });
 
   it('has accessible aria-label', () => {

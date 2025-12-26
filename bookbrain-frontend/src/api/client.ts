@@ -1,3 +1,5 @@
+import type { SearchResponse } from '@/types';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export class ApiError extends Error {
@@ -39,4 +41,19 @@ export async function apiFetch<T>(
   }
 
   return response.json();
+}
+
+/**
+ * Search books by query using semantic search.
+ * @param query - The search query string
+ * @param limit - Maximum number of results (default: 10)
+ */
+export async function searchBooks(
+  query: string,
+  limit = 10
+): Promise<SearchResponse> {
+  return apiFetch<SearchResponse>('/api/search', {
+    method: 'POST',
+    body: JSON.stringify({ query, limit }),
+  });
 }
