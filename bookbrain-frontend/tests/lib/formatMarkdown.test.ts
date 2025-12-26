@@ -15,6 +15,7 @@ describe('formatMarkdown', () => {
 
     const markdown = formatMarkdown(result);
 
+    // Each line of content should have `> ` prefix
     expect(markdown).toBe(`> **Test Book** (p.42)
 >
 > This is the content.`);
@@ -86,7 +87,7 @@ describe('formatMarkdown', () => {
     expect(markdown).toContain('> blockquote chars');
   });
 
-  it('handles multiline content', () => {
+  it('handles multiline content with proper blockquote prefix', () => {
     const result: SearchResultItem = {
       book_id: 1,
       title: 'Multiline Book',
@@ -98,7 +99,11 @@ describe('formatMarkdown', () => {
 
     const markdown = formatMarkdown(result);
 
-    // Content should be on a single blockquote line
-    expect(markdown).toContain('First line.\nSecond line.\nThird line.');
+    // Each line of content should have `> ` prefix for proper Obsidian blockquote
+    expect(markdown).toBe(`> **Multiline Book** (p.50)
+>
+> First line.
+> Second line.
+> Third line.`);
   });
 });

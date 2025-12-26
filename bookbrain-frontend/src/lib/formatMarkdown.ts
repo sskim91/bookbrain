@@ -5,12 +5,22 @@ import type { SearchResultItem } from '@/types';
  * Format:
  * > **Title** (p.123)
  * >
- * > Content...
+ * > Content line 1...
+ * > Content line 2...
+ *
+ * Each line of content is prefixed with `> ` to maintain proper blockquote
+ * formatting in Obsidian, even for multiline content.
  */
 export function formatMarkdown(result: SearchResultItem): string {
   const { title, page, content } = result;
 
+  // Add `> ` prefix to each line for proper Obsidian blockquote
+  const formattedContent = content
+    .split('\n')
+    .map((line) => `> ${line}`)
+    .join('\n');
+
   return `> **${title}** (p.${page})
 >
-> ${content}`;
+${formattedContent}`;
 }
