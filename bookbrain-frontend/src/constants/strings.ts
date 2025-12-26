@@ -44,4 +44,13 @@ export const STRINGS = {
   COMMAND_PALETTE_DESCRIPTION: '검색어를 입력하여 책 내용을 찾으세요',
   COMMAND_PALETTE_EMPTY: '검색 결과가 없습니다',
   COMMAND_PALETTE_LOADING: '검색 중...',
+
+  // Upload
+  UPLOAD_BUTTON: 'Upload',
+  UPLOAD_BUTTON_ARIA_LABEL: 'PDF 업로드',
+  UPLOAD_DIALOG_TITLE: 'Upload PDF',
+  UPLOAD_DIALOG_DESCRIPTION: 'Add a new book to your library',
+  UPLOAD_DIALOG_SR_INSTRUCTIONS:
+    'PDF 파일을 선택하여 책을 추가하세요. 업로드 후 자동으로 텍스트가 추출되어 검색이 가능해집니다.',
+  UPLOAD_DIALOG_PLACEHOLDER: 'PDF upload area will be here',
 } as const;
