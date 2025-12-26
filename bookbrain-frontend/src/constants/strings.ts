@@ -33,4 +33,8 @@ export const STRINGS = {
 
   // Score
   SCORE_ARIA_LABEL: (percent: number) => `유사도 ${percent}%`,
+
+  // Detail Dialog
+  DIALOG_DESCRIPTION_SUFFIX: '의 상세 내용',
+  DIALOG_CLOSE: '닫기',
 } as const;

@@ -3,12 +3,15 @@ import { toast } from 'sonner';
 import { MainLayout } from '@/components/MainLayout';
 import { SearchInput } from '@/components/SearchInput';
 import { SearchResultList } from '@/components/SearchResultList';
+import { ResultDetailDialog } from '@/components/ResultDetailDialog';
 import { useSearch } from '@/hooks/useSearch';
 import { STRINGS } from '@/constants/strings';
+import type { SearchResultItem } from '@/types';
 
 function App() {
   const [inputValue, setInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
+  const [selectedResult, setSelectedResult] = useState<SearchResultItem | null>(null);
 
   const { data, isFetching, isError, error } = useSearch(searchQuery);
 
@@ -49,8 +52,17 @@ function App() {
           hasSearched={searchQuery !== null}
           total={data?.total}
           queryTimeMs={data?.query_time_ms}
+          onResultClick={setSelectedResult}
         />
       </div>
+
+      <ResultDetailDialog
+        open={selectedResult !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedResult(null);
+        }}
+        result={selectedResult}
+      />
     </MainLayout>
   );
 }

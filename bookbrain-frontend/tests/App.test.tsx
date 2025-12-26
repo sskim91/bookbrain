@@ -192,4 +192,93 @@ describe('App', () => {
     expect(screen.getByText(STRINGS.SEARCH_ERROR)).toBeInTheDocument();
     expect(screen.getByText(STRINGS.SEARCH_ERROR_HINT)).toBeInTheDocument();
   });
+
+  it('opens detail dialog when result card is clicked', async () => {
+    const { searchBooks } = await import('@/api/client');
+    (searchBooks as ReturnType<typeof vi.fn>).mockResolvedValue({
+      results: [
+        {
+          book_id: 1,
+          title: '토비의 스프링',
+          author: '이일민',
+          page: 423,
+          content: 'Spring Security는 인증과 권한 부여를 담당합니다.',
+          score: 0.92,
+        },
+      ],
+      total: 1,
+      query_time_ms: 100,
+    });
+
+    const user = userEvent.setup();
+    renderApp();
+
+    const searchInput = screen.getByPlaceholderText(STRINGS.SEARCH_PLACEHOLDER);
+    await user.type(searchInput, 'Spring');
+    await user.keyboard('{Enter}');
+
+    // Wait for results
+    await waitFor(() => {
+      expect(screen.getByText('토비의 스프링')).toBeInTheDocument();
+    });
+
+    // Click on the result card
+    const resultCard = screen.getByRole('article');
+    await user.click(resultCard);
+
+    // Wait for dialog to open
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    // Dialog should show full content (getAllByText since content appears in both card and dialog)
+    const contentElements = screen.getAllByText(/Spring Security는 인증과 권한 부여를 담당합니다\./);
+    expect(contentElements.length).toBeGreaterThanOrEqual(2); // One in card, one in dialog
+  });
+
+  it('closes detail dialog when Escape is pressed', async () => {
+    const { searchBooks } = await import('@/api/client');
+    (searchBooks as ReturnType<typeof vi.fn>).mockResolvedValue({
+      results: [
+        {
+          book_id: 1,
+          title: '토비의 스프링',
+          author: '이일민',
+          page: 423,
+          content: 'Spring Security는 인증과 권한 부여를 담당합니다.',
+          score: 0.92,
+        },
+      ],
+      total: 1,
+      query_time_ms: 100,
+    });
+
+    const user = userEvent.setup();
+    renderApp();
+
+    const searchInput = screen.getByPlaceholderText(STRINGS.SEARCH_PLACEHOLDER);
+    await user.type(searchInput, 'Spring');
+    await user.keyboard('{Enter}');
+
+    // Wait for results and click card
+    await waitFor(() => {
+      expect(screen.getByText('토비의 스프링')).toBeInTheDocument();
+    });
+
+    const resultCard = screen.getByRole('article');
+    await user.click(resultCard);
+
+    // Wait for dialog to open
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    // Press Escape to close
+    await user.keyboard('{Escape}');
+
+    // Dialog should be closed
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
 });

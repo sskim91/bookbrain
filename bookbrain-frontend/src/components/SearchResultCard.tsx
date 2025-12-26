@@ -39,11 +39,20 @@ export function SearchResultCard({ result, onClick }: SearchResultCardProps) {
     }
   };
 
+  const handleCardKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleCardClick();
+    }
+  };
+
   return (
     <Card
-      className="p-5 cursor-pointer hover:bg-muted/50 transition-colors"
+      className="p-5 cursor-pointer hover:bg-muted/50 transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 outline-none"
       onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
       role="article"
+      tabIndex={0}
     >
       <div className="flex justify-between items-start mb-3">
         <div>

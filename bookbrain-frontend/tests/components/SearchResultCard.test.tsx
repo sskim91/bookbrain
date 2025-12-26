@@ -131,6 +131,44 @@ describe('SearchResultCard', () => {
     });
   });
 
+  describe('Keyboard accessibility', () => {
+    it('has tabIndex for keyboard focus', () => {
+      render(<SearchResultCard result={mockResult} />);
+      const card = screen.getByRole('article');
+      expect(card).toHaveAttribute('tabindex', '0');
+    });
+
+    it('calls onClick when Enter key is pressed', async () => {
+      const user = userEvent.setup();
+      const onClick = vi.fn();
+      render(<SearchResultCard result={mockResult} onClick={onClick} />);
+
+      const card = screen.getByRole('article');
+      card.focus();
+      await user.keyboard('{Enter}');
+
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls onClick when Space key is pressed', async () => {
+      const user = userEvent.setup();
+      const onClick = vi.fn();
+      render(<SearchResultCard result={mockResult} onClick={onClick} />);
+
+      const card = screen.getByRole('article');
+      card.focus();
+      await user.keyboard(' ');
+
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('has focus-visible ring styles', () => {
+      render(<SearchResultCard result={mockResult} />);
+      const card = screen.getByRole('article');
+      expect(card).toHaveClass('focus-visible:ring-2');
+    });
+  });
+
   describe('Content preview', () => {
     it('has line-clamp-3 for content truncation', () => {
       render(<SearchResultCard result={mockResult} />);
