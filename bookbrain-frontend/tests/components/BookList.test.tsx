@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BookList } from '@/components/BookList';
 import * as booksApi from '@/api/books';
@@ -9,6 +10,15 @@ import { STRINGS } from '@/constants/strings';
 vi.mock('@/api/books', () => ({
   getBooks: vi.fn(),
   uploadBook: vi.fn(),
+  deleteBook: vi.fn(),
+}));
+
+// Mock sonner toast
+vi.mock('sonner', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
 const createWrapper = () => {
@@ -174,6 +184,121 @@ describe('BookList', () => {
 
       await waitFor(() => {
         expect(screen.getByText(STRINGS.BOOK_LIST_ERROR)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('delete functionality', () => {
+    const mockBooks = {
+      books: [
+        {
+          id: 1,
+          title: '토비의 스프링',
+          author: '이일민',
+          file_path: '/path/to/spring.pdf',
+          total_pages: 423,
+          embedding_model: 'text-embedding-3-small',
+          created_at: '2025-12-25T10:00:00Z',
+        },
+      ],
+      total: 1,
+    };
+
+    it('shows delete button on hover', async () => {
+      const mockGetBooks = vi.mocked(booksApi.getBooks);
+      mockGetBooks.mockResolvedValue(mockBooks);
+
+      render(<BookList />, { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(screen.getByText('토비의 스프링')).toBeInTheDocument();
+      });
+
+      // Delete button should exist (though may be hidden via CSS)
+      const deleteButton = screen.getByLabelText(STRINGS.BOOK_DELETE_BUTTON_ARIA_LABEL);
+      expect(deleteButton).toBeInTheDocument();
+    });
+
+    it('shows confirmation dialog when delete button is clicked', async () => {
+      const user = userEvent.setup();
+      const mockGetBooks = vi.mocked(booksApi.getBooks);
+      mockGetBooks.mockResolvedValue(mockBooks);
+
+      render(<BookList />, { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(screen.getByText('토비의 스프링')).toBeInTheDocument();
+      });
+
+      const deleteButton = screen.getByLabelText(STRINGS.BOOK_DELETE_BUTTON_ARIA_LABEL);
+      await user.click(deleteButton);
+
+      // Confirmation dialog should appear
+      await waitFor(() => {
+        expect(screen.getByText(STRINGS.BOOK_DELETE_DIALOG_TITLE)).toBeInTheDocument();
+      });
+
+      expect(
+        screen.getByText(STRINGS.BOOK_DELETE_DIALOG_DESCRIPTION('토비의 스프링'))
+      ).toBeInTheDocument();
+    });
+
+    it('closes dialog when cancel is clicked', async () => {
+      const user = userEvent.setup();
+      const mockGetBooks = vi.mocked(booksApi.getBooks);
+      mockGetBooks.mockResolvedValue(mockBooks);
+
+      render(<BookList />, { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(screen.getByText('토비의 스프링')).toBeInTheDocument();
+      });
+
+      // Open dialog
+      const deleteButton = screen.getByLabelText(STRINGS.BOOK_DELETE_BUTTON_ARIA_LABEL);
+      await user.click(deleteButton);
+
+      await waitFor(() => {
+        expect(screen.getByText(STRINGS.BOOK_DELETE_DIALOG_TITLE)).toBeInTheDocument();
+      });
+
+      // Click cancel
+      const cancelButton = screen.getByText(STRINGS.BOOK_DELETE_CANCEL);
+      await user.click(cancelButton);
+
+      // Dialog should close
+      await waitFor(() => {
+        expect(screen.queryByText(STRINGS.BOOK_DELETE_DIALOG_TITLE)).not.toBeInTheDocument();
+      });
+    });
+
+    it('calls deleteBook API when confirm is clicked', async () => {
+      const user = userEvent.setup();
+      const mockGetBooks = vi.mocked(booksApi.getBooks);
+      const mockDeleteBook = vi.mocked(booksApi.deleteBook);
+      mockGetBooks.mockResolvedValue(mockBooks);
+      mockDeleteBook.mockResolvedValue({ deleted: true });
+
+      render(<BookList />, { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(screen.getByText('토비의 스프링')).toBeInTheDocument();
+      });
+
+      // Open dialog
+      const deleteButton = screen.getByLabelText(STRINGS.BOOK_DELETE_BUTTON_ARIA_LABEL);
+      await user.click(deleteButton);
+
+      await waitFor(() => {
+        expect(screen.getByText(STRINGS.BOOK_DELETE_DIALOG_TITLE)).toBeInTheDocument();
+      });
+
+      // Click confirm
+      const confirmButton = screen.getByText(STRINGS.BOOK_DELETE_CONFIRM);
+      await user.click(confirmButton);
+
+      await waitFor(() => {
+        expect(mockDeleteBook).toHaveBeenCalledWith(1);
       });
     });
   });

@@ -1,24 +1,29 @@
-import { BookOpen } from 'lucide-react';
+import { useState } from 'react';
+import { BookOpen, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { BookListEmptyState } from '@/components/BookListEmptyState';
+import { DeleteBookDialog } from '@/components/DeleteBookDialog';
 import { useBooks } from '@/hooks/useBooks';
+import { useDeleteBook } from '@/hooks/useDeleteBook';
 import { STRINGS } from '@/constants/strings';
 import { formatDate } from '@/lib/utils';
 import type { Book } from '@/types/book';
 
 interface BookItemProps {
   book: Book;
+  onDelete: (book: Book) => void;
 }
 
 /**
  * Individual book item in the list.
- * Displays book title, page count, and registration date.
+ * Displays book title, page count, registration date, and delete button on hover.
  */
-function BookItem({ book }: BookItemProps) {
+function BookItem({ book, onDelete }: BookItemProps) {
   return (
     <div
-      className="flex items-start gap-3 p-3 rounded-md hover:bg-muted/50 transition-colors"
+      className="group flex items-start gap-3 p-3 rounded-md hover:bg-muted/50 transition-colors"
       role="article"
       aria-label={book.title}
     >
@@ -32,6 +37,15 @@ function BookItem({ book }: BookItemProps) {
           {STRINGS.BOOK_LIST_PAGE_COUNT(book.total_pages)} · {formatDate(book.created_at)}
         </p>
       </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+        onClick={() => onDelete(book)}
+        aria-label={STRINGS.BOOK_DELETE_BUTTON_ARIA_LABEL}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
     </div>
   );
 }
@@ -62,9 +76,35 @@ function BookListSkeleton() {
  * - Loading skeleton while fetching
  * - Empty state when no books exist
  * - Error handling
+ * - Delete functionality with confirmation dialog
  */
 export function BookList() {
   const { data, isLoading, isError } = useBooks();
+  const deleteBook = useDeleteBook();
+  const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
+
+  const handleDeleteClick = (book: Book) => {
+    setBookToDelete(book);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (bookToDelete) {
+      deleteBook.mutate(
+        { bookId: bookToDelete.id, bookTitle: bookToDelete.title },
+        {
+          onSettled: () => {
+            setBookToDelete(null);
+          },
+        }
+      );
+    }
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    if (!open && !deleteBook.isPending) {
+      setBookToDelete(null);
+    }
+  };
 
   if (isLoading) {
     return <BookListSkeleton />;
@@ -97,10 +137,18 @@ export function BookList() {
       <ScrollArea className="h-[200px] rounded-md border">
         <div className="p-1">
           {sortedBooks.map((book) => (
-            <BookItem key={book.id} book={book} />
+            <BookItem key={book.id} book={book} onDelete={handleDeleteClick} />
           ))}
         </div>
       </ScrollArea>
+
+      <DeleteBookDialog
+        open={bookToDelete !== null}
+        onOpenChange={handleDialogClose}
+        bookTitle={bookToDelete?.title ?? ''}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={deleteBook.isPending}
+      />
     </div>
   );
 }

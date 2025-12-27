@@ -99,4 +99,15 @@ export const STRINGS = {
   BOOK_LIST_PAGE_COUNT: (pages: number) => `${pages}p`,
   BOOK_LIST_LOADING: '책 목록을 불러오는 중...',
   BOOK_LIST_ERROR: '책 목록을 불러오는 데 실패했습니다',
+
+  // Book Delete
+  BOOK_DELETE_BUTTON_ARIA_LABEL: '책 삭제',
+  BOOK_DELETE_DIALOG_TITLE: '책을 삭제하시겠습니까?',
+  BOOK_DELETE_DIALOG_DESCRIPTION: (bookTitle: string) =>
+    `『${bookTitle}』을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`,
+  BOOK_DELETE_CANCEL: '취소',
+  BOOK_DELETE_CONFIRM: '삭제',
+  BOOK_DELETE_IN_PROGRESS: '삭제 중...',
+  BOOK_DELETE_SUCCESS: (bookTitle: string) => `『${bookTitle}』이 삭제되었습니다`,
+  BOOK_DELETE_ERROR: '삭제 중 오류가 발생했습니다',
 } as const;

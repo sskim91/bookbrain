@@ -12,3 +12,7 @@ export interface BookListResponse {
   books: Book[];
   total: number;
 }
+
+export interface DeleteBookResponse {
+  deleted: boolean;
+}

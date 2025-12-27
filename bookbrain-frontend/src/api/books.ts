@@ -1,5 +1,5 @@
 import { apiFetch, ApiError } from './client';
-import type { BookListResponse } from '@/types/book';
+import type { BookListResponse, DeleteBookResponse } from '@/types/book';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -111,5 +111,19 @@ export function uploadBook(
     // Send request
     xhr.open('POST', `${API_BASE_URL}/api/books`);
     xhr.send(formData);
+  });
+}
+
+/**
+ * Delete a book by ID.
+ * Removes the book record, associated chunks, and PDF file.
+ *
+ * @param bookId - The ID of the book to delete
+ * @returns Promise resolving to the delete response
+ * @throws ApiError on server or network errors (404 if book not found)
+ */
+export async function deleteBook(bookId: number): Promise<DeleteBookResponse> {
+  return apiFetch<DeleteBookResponse>(`/api/books/${bookId}`, {
+    method: 'DELETE',
   });
 }
