@@ -53,4 +53,17 @@ export const STRINGS = {
   UPLOAD_DIALOG_SR_INSTRUCTIONS:
     'PDF 파일을 선택하여 책을 추가하세요. 업로드 후 자동으로 텍스트가 추출되어 검색이 가능해집니다.',
   UPLOAD_DIALOG_PLACEHOLDER: 'PDF upload area will be here',
+
+  // Dropzone
+  DROPZONE_DEFAULT_TEXT: 'PDF 파일을 드래그하거나 클릭하여 선택',
+  DROPZONE_ACTIVE_TEXT: '여기에 놓으세요',
+  DROPZONE_ERROR_INVALID_TYPE: 'PDF 파일만 업로드 가능합니다',
+  DROPZONE_ARIA_LABEL:
+    'PDF 파일 드롭존. 클릭하여 파일을 선택하거나 드래그 앤 드롭하세요.',
+
+  // Upload flow
+  UPLOAD_SUBMIT_BUTTON: '업로드',
+  UPLOAD_SELECTED_FILE: '선택된 파일:',
+  UPLOAD_FILE_REMOVE: '파일 선택 취소',
+  UPLOAD_FILE_REMOVE_ARIA_LABEL: '선택된 파일 제거',
 } as const;

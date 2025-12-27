@@ -55,7 +55,8 @@ describe('UploadDialog', () => {
       // Check title and description
       expect(screen.getByText(STRINGS.UPLOAD_DIALOG_TITLE)).toBeInTheDocument();
       expect(screen.getByText(STRINGS.UPLOAD_DIALOG_DESCRIPTION)).toBeInTheDocument();
-      expect(screen.getByText(STRINGS.UPLOAD_DIALOG_PLACEHOLDER)).toBeInTheDocument();
+      // DropZone is shown instead of placeholder
+      expect(screen.getByText(STRINGS.DROPZONE_DEFAULT_TEXT)).toBeInTheDocument();
     });
 
     it('moves focus to dialog content when opened', async () => {
