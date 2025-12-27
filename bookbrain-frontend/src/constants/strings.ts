@@ -66,4 +66,23 @@ export const STRINGS = {
   UPLOAD_SELECTED_FILE: '선택된 파일:',
   UPLOAD_FILE_REMOVE: '파일 선택 취소',
   UPLOAD_FILE_REMOVE_ARIA_LABEL: '선택된 파일 제거',
+
+  // Upload Progress
+  UPLOAD_STAGE_UPLOADING: '업로드 중...',
+  UPLOAD_STAGE_PARSING: 'PDF 파싱 중...',
+  UPLOAD_STAGE_CHUNKING: '텍스트 분할 중...',
+  UPLOAD_STAGE_EMBEDDING: '임베딩 생성 중...',
+  UPLOAD_STAGE_COMPLETE: '완료!',
+  UPLOAD_PROGRESS_ARIA_LABEL: (percent: number) => `업로드 진행률 ${percent}%`,
+  UPLOAD_STAGE_UPLOAD: '업로드',
+  UPLOAD_STAGE_PARSE: '파싱',
+  UPLOAD_STAGE_CHUNK: '청킹',
+  UPLOAD_STAGE_EMBED: '임베딩',
+
+  // Upload Error
+  UPLOAD_ERROR_GENERIC: '업로드 중 오류가 발생했습니다',
+  UPLOAD_RETRY_BUTTON: '다시 시도',
+  UPLOAD_ERROR_INVALID_FORMAT: 'PDF 파일만 업로드 가능합니다',
+  UPLOAD_ERROR_DUPLICATE: '이미 등록된 책입니다',
+  UPLOAD_ERROR_INDEXING: '인덱싱 중 오류가 발생했습니다',
 } as const;

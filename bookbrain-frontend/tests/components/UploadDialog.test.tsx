@@ -1,30 +1,63 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { UploadDialog } from '@/components/UploadDialog';
 import { STRINGS } from '@/constants/strings';
+import React from 'react';
+
+// Mock the books API to prevent actual network calls
+vi.mock('@/api/books', () => ({
+  uploadBook: vi.fn(),
+}));
+
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+  return function Wrapper({ children }: { children: React.ReactNode }) {
+    return React.createElement(
+      QueryClientProvider,
+      { client: queryClient },
+      children
+    );
+  };
+};
+
+const renderWithWrapper = (ui: React.ReactElement) => {
+  return render(ui, { wrapper: createWrapper() });
+};
 
 describe('UploadDialog', () => {
   describe('AC1: Upload 버튼 표시', () => {
     it('renders Upload button', () => {
-      render(<UploadDialog />);
+      renderWithWrapper(<UploadDialog />);
 
-      const button = screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL });
+      const button = screen.getByRole('button', {
+        name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL,
+      });
       expect(button).toBeInTheDocument();
       expect(button).toHaveTextContent(STRINGS.UPLOAD_BUTTON);
     });
 
     it('Upload button has correct aria-label', () => {
-      render(<UploadDialog />);
+      renderWithWrapper(<UploadDialog />);
 
-      const button = screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL });
+      const button = screen.getByRole('button', {
+        name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL,
+      });
       expect(button).toHaveAttribute('aria-label', STRINGS.UPLOAD_BUTTON_ARIA_LABEL);
     });
 
     it('Upload button has Upload icon', () => {
-      render(<UploadDialog />);
+      renderWithWrapper(<UploadDialog />);
 
-      const button = screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL });
+      const button = screen.getByRole('button', {
+        name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL,
+      });
       const svg = button.querySelector('svg');
       expect(svg).toBeInTheDocument();
     });
@@ -33,37 +66,47 @@ describe('UploadDialog', () => {
   describe('AC2: 모달 열기', () => {
     it('opens dialog when Upload button is clicked', async () => {
       const user = userEvent.setup();
-      render(<UploadDialog />);
+      renderWithWrapper(<UploadDialog />);
 
-      const button = screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL });
+      const button = screen.getByRole('button', {
+        name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL,
+      });
       await user.click(button);
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByText(STRINGS.UPLOAD_DIALOG_TITLE)).toBeInTheDocument();
-      expect(screen.getByText(STRINGS.UPLOAD_DIALOG_DESCRIPTION)).toBeInTheDocument();
+      expect(
+        screen.getByText(STRINGS.UPLOAD_DIALOG_DESCRIPTION)
+      ).toBeInTheDocument();
     });
 
     it('dialog has correct structure with title and description', async () => {
       const user = userEvent.setup();
-      render(<UploadDialog />);
+      renderWithWrapper(<UploadDialog />);
 
-      await user.click(screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL }));
+      await user.click(
+        screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL })
+      );
 
       const dialog = screen.getByRole('dialog');
       expect(dialog).toBeInTheDocument();
 
       // Check title and description
       expect(screen.getByText(STRINGS.UPLOAD_DIALOG_TITLE)).toBeInTheDocument();
-      expect(screen.getByText(STRINGS.UPLOAD_DIALOG_DESCRIPTION)).toBeInTheDocument();
+      expect(
+        screen.getByText(STRINGS.UPLOAD_DIALOG_DESCRIPTION)
+      ).toBeInTheDocument();
       // DropZone is shown instead of placeholder
       expect(screen.getByText(STRINGS.DROPZONE_DEFAULT_TEXT)).toBeInTheDocument();
     });
 
     it('moves focus to dialog content when opened', async () => {
       const user = userEvent.setup();
-      render(<UploadDialog />);
+      renderWithWrapper(<UploadDialog />);
 
-      await user.click(screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL }));
+      await user.click(
+        screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL })
+      );
 
       await waitFor(() => {
         const dialog = screen.getByRole('dialog');
@@ -77,10 +120,12 @@ describe('UploadDialog', () => {
   describe('AC3: 모달 닫기', () => {
     it('closes dialog when X button is clicked', async () => {
       const user = userEvent.setup();
-      render(<UploadDialog />);
+      renderWithWrapper(<UploadDialog />);
 
       // Open dialog
-      await user.click(screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL }));
+      await user.click(
+        screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL })
+      );
       expect(screen.getByRole('dialog')).toBeInTheDocument();
 
       // Close via X button
@@ -94,10 +139,12 @@ describe('UploadDialog', () => {
 
     it('closes dialog when Esc key is pressed', async () => {
       const user = userEvent.setup();
-      render(<UploadDialog />);
+      renderWithWrapper(<UploadDialog />);
 
       // Open dialog
-      await user.click(screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL }));
+      await user.click(
+        screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL })
+      );
       expect(screen.getByRole('dialog')).toBeInTheDocument();
 
       // Close via Esc
@@ -110,10 +157,12 @@ describe('UploadDialog', () => {
 
     it('closes dialog when backdrop is clicked', async () => {
       const user = userEvent.setup();
-      render(<UploadDialog />);
+      renderWithWrapper(<UploadDialog />);
 
       // Open dialog
-      await user.click(screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL }));
+      await user.click(
+        screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL })
+      );
       expect(screen.getByRole('dialog')).toBeInTheDocument();
 
       // Click on the overlay (backdrop)
@@ -133,9 +182,11 @@ describe('UploadDialog', () => {
   describe('Accessibility', () => {
     it('dialog has correct aria attributes', async () => {
       const user = userEvent.setup();
-      render(<UploadDialog />);
+      renderWithWrapper(<UploadDialog />);
 
-      await user.click(screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL }));
+      await user.click(
+        screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL })
+      );
 
       const dialog = screen.getByRole('dialog');
       // Radix Dialog automatically associates aria-describedby with DialogDescription
@@ -145,22 +196,28 @@ describe('UploadDialog', () => {
 
     it('includes screen reader instructions for context', async () => {
       const user = userEvent.setup();
-      render(<UploadDialog />);
+      renderWithWrapper(<UploadDialog />);
 
-      await user.click(screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL }));
+      await user.click(
+        screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL })
+      );
 
       // Check that sr-only instructions are present in the DOM
       const srInstructions = document.querySelector('.sr-only');
       expect(srInstructions).toBeInTheDocument();
-      expect(srInstructions?.textContent).toContain(STRINGS.UPLOAD_DIALOG_SR_INSTRUCTIONS);
+      expect(srInstructions?.textContent).toContain(
+        STRINGS.UPLOAD_DIALOG_SR_INSTRUCTIONS
+      );
     });
 
     it('dialog can be opened and closed with keyboard only', async () => {
       const user = userEvent.setup();
-      render(<UploadDialog />);
+      renderWithWrapper(<UploadDialog />);
 
       // Focus and activate button with keyboard
-      const button = screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL });
+      const button = screen.getByRole('button', {
+        name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL,
+      });
       button.focus();
       await user.keyboard('{Enter}');
 

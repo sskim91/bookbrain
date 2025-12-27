@@ -10,11 +10,26 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { DropZone } from '@/components/DropZone';
+import { UploadProgress } from '@/components/UploadProgress';
+import { UploadErrorState } from '@/components/UploadErrorState';
 import { STRINGS } from '@/constants/strings';
 import { formatFileSize } from '@/lib/utils';
+import { useUploadBook } from '@/hooks/useUploadBook';
 
 export function UploadDialog() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [open, setOpen] = useState(false);
+
+  const {
+    upload,
+    stage,
+    progress,
+    isError,
+    error,
+    reset: resetUpload,
+  } = useUploadBook();
+
+  const isUploading = stage !== 'idle' && stage !== 'done' && stage !== 'error';
 
   const handleFileSelect = useCallback((file: File) => {
     setSelectedFile(file);
@@ -26,19 +41,94 @@ export function UploadDialog() {
 
   const handleUpload = useCallback(() => {
     if (!selectedFile) return;
-    // TODO: Story 3.3 will implement actual upload logic
-    console.log('Uploading file:', selectedFile.name);
-  }, [selectedFile]);
+    upload(selectedFile);
+  }, [selectedFile, upload]);
 
-  const handleOpenChange = useCallback((open: boolean) => {
-    // Reset state when dialog closes
-    if (!open) {
-      setSelectedFile(null);
+  const handleRetry = useCallback(() => {
+    resetUpload();
+    if (selectedFile) {
+      upload(selectedFile);
     }
-  }, []);
+  }, [resetUpload, selectedFile, upload]);
+
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      // Prevent closing dialog during upload
+      if (!newOpen && isUploading) {
+        return;
+      }
+
+      setOpen(newOpen);
+
+      // Reset state when dialog closes
+      if (!newOpen) {
+        setSelectedFile(null);
+        resetUpload();
+      }
+    },
+    [isUploading, resetUpload]
+  );
+
+  // Determine what to render based on state
+  const renderContent = () => {
+    // Error state
+    if (isError) {
+      return (
+        <UploadErrorState
+          message={error?.message}
+          onRetry={handleRetry}
+        />
+      );
+    }
+
+    // Uploading/processing state
+    if (isUploading || stage === 'done') {
+      return <UploadProgress stage={stage} progress={progress} />;
+    }
+
+    // Idle state - no file selected
+    if (!selectedFile) {
+      return <DropZone onFileSelect={handleFileSelect} />;
+    }
+
+    // Idle state - file selected, ready to upload
+    return (
+      <div className="space-y-4">
+        {/* Selected file card */}
+        <div className="flex items-center gap-3 p-4 border rounded-lg bg-muted/30">
+          <FileText className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-medium truncate">{selectedFile.name}</p>
+            <p className="text-sm text-muted-foreground">
+              {formatFileSize(selectedFile.size)}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleRemoveFile}
+            disabled={isUploading}
+            aria-label={STRINGS.UPLOAD_FILE_REMOVE_ARIA_LABEL}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Upload button */}
+        <Button
+          onClick={handleUpload}
+          className="w-full"
+          disabled={isUploading}
+        >
+          <Upload className="mr-2 h-4 w-4" />
+          {STRINGS.UPLOAD_SUBMIT_BUTTON}
+        </Button>
+      </div>
+    );
+  };
 
   return (
-    <Dialog onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
           variant="outline"
@@ -49,7 +139,21 @@ export function UploadDialog() {
           {STRINGS.UPLOAD_BUTTON}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[560px]">
+      <DialogContent
+        className="sm:max-w-[560px]"
+        onPointerDownOutside={(e) => {
+          // Prevent closing on outside click during upload
+          if (isUploading) {
+            e.preventDefault();
+          }
+        }}
+        onEscapeKeyDown={(e) => {
+          // Prevent closing on escape during upload
+          if (isUploading) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{STRINGS.UPLOAD_DIALOG_TITLE}</DialogTitle>
           <DialogDescription>
@@ -61,38 +165,7 @@ export function UploadDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        {/* File not selected: Show DropZone */}
-        {!selectedFile && <DropZone onFileSelect={handleFileSelect} />}
-
-        {/* File selected: Show file info and upload button */}
-        {selectedFile && (
-          <div className="space-y-4">
-            {/* Selected file card */}
-            <div className="flex items-center gap-3 p-4 border rounded-lg bg-muted/30">
-              <FileText className="h-8 w-8 text-muted-foreground flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{selectedFile.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {formatFileSize(selectedFile.size)}
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleRemoveFile}
-                aria-label={STRINGS.UPLOAD_FILE_REMOVE_ARIA_LABEL}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Upload button */}
-            <Button onClick={handleUpload} className="w-full">
-              <Upload className="mr-2 h-4 w-4" />
-              {STRINGS.UPLOAD_SUBMIT_BUTTON}
-            </Button>
-          </div>
-        )}
+        {renderContent()}
       </DialogContent>
     </Dialog>
   );
