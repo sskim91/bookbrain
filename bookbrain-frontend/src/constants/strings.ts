@@ -91,4 +91,12 @@ export const STRINGS = {
 
   // Upload Complete Actions (AC #3)
   UPLOAD_ANOTHER_BUTTON: '다른 파일 업로드',
+
+  // Book List
+  BOOK_LIST_TITLE: (count: number) => `등록된 책 (${count}권)`,
+  BOOK_LIST_EMPTY_TITLE: '등록된 책이 없습니다',
+  BOOK_LIST_EMPTY_DESCRIPTION: 'PDF 파일을 업로드하여 책을 추가하세요',
+  BOOK_LIST_PAGE_COUNT: (pages: number) => `${pages}p`,
+  BOOK_LIST_LOADING: '책 목록을 불러오는 중...',
+  BOOK_LIST_ERROR: '책 목록을 불러오는 데 실패했습니다',
 } as const;

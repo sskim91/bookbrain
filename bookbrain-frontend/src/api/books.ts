@@ -1,6 +1,23 @@
-import { ApiError } from './client';
+import { apiFetch, ApiError } from './client';
+import type { BookListResponse } from '@/types/book';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+/**
+ * Fetch the list of indexed books.
+ *
+ * @param limit - Maximum number of books to return (default: 100)
+ * @param offset - Number of books to skip (default: 0)
+ * @returns Promise resolving to the book list response
+ */
+export async function getBooks(
+  limit = 100,
+  offset = 0
+): Promise<BookListResponse> {
+  return apiFetch<BookListResponse>(
+    `/api/books?limit=${limit}&offset=${offset}`
+  );
+}
 
 /**
  * Response from the book upload/indexing endpoint

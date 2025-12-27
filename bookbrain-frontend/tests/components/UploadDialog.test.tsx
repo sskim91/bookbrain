@@ -9,6 +9,7 @@ import React from 'react';
 // Mock the books API to prevent actual network calls
 vi.mock('@/api/books', () => ({
   uploadBook: vi.fn(),
+  getBooks: vi.fn().mockResolvedValue({ books: [], total: 0 }),
 }));
 
 const createWrapper = () => {
@@ -230,6 +231,44 @@ describe('UploadDialog', () => {
 
       await waitFor(() => {
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Book List Integration (Story 3.5)', () => {
+    it('shows BookList section in dialog', async () => {
+      const user = userEvent.setup();
+      renderWithWrapper(<UploadDialog />);
+
+      await user.click(
+        screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL })
+      );
+
+      await waitFor(() => {
+        // Empty state should show when no books
+        expect(
+          screen.getByText(STRINGS.BOOK_LIST_EMPTY_TITLE)
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('shows both BookList and DropZone sections', async () => {
+      const user = userEvent.setup();
+      renderWithWrapper(<UploadDialog />);
+
+      await user.click(
+        screen.getByRole('button', { name: STRINGS.UPLOAD_BUTTON_ARIA_LABEL })
+      );
+
+      await waitFor(() => {
+        // BookList empty state
+        expect(
+          screen.getByText(STRINGS.BOOK_LIST_EMPTY_TITLE)
+        ).toBeInTheDocument();
+        // DropZone
+        expect(
+          screen.getByText(STRINGS.DROPZONE_DEFAULT_TEXT)
+        ).toBeInTheDocument();
       });
     });
   });

@@ -12,6 +12,7 @@ import {
 import { DropZone } from '@/components/DropZone';
 import { UploadProgress } from '@/components/UploadProgress';
 import { UploadErrorState } from '@/components/UploadErrorState';
+import { BookList } from '@/components/BookList';
 import { STRINGS } from '@/constants/strings';
 import { formatFileSize } from '@/lib/utils';
 import { useUploadBook } from '@/hooks/useUploadBook';
@@ -188,7 +189,16 @@ export function UploadDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        {renderContent()}
+        <div className="space-y-6">
+          {/* Book List Section (FR5, FR21) */}
+          <BookList />
+
+          {/* Separator */}
+          <div className="border-t" />
+
+          {/* Upload Section */}
+          {renderContent()}
+        </div>
       </DialogContent>
     </Dialog>
   );
