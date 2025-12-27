@@ -85,4 +85,10 @@ export const STRINGS = {
   UPLOAD_ERROR_INVALID_FORMAT: 'PDF 파일만 업로드 가능합니다',
   UPLOAD_ERROR_DUPLICATE: '이미 등록된 책입니다',
   UPLOAD_ERROR_INDEXING: '인덱싱 중 오류가 발생했습니다',
+
+  // Upload Success Toast (AC #1, #2)
+  UPLOAD_SUCCESS_TOAST: (bookTitle: string) => `『${bookTitle}』 인덱싱 완료`,
+
+  // Upload Complete Actions (AC #3)
+  UPLOAD_ANOTHER_BUTTON: '다른 파일 업로드',
 } as const;

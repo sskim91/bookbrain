@@ -1,7 +1,16 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { uploadBook, type UploadBookResponse } from '@/api/books';
 import type { ApiError } from '@/api/client';
+import { STRINGS } from '@/constants/strings';
+
+/**
+ * Extract book title from filename by removing .pdf extension
+ */
+function getBookTitleFromFilename(filename: string): string {
+  return filename.replace(/\.pdf$/i, '');
+}
 
 /**
  * Upload stage states for tracking the upload process
@@ -38,11 +47,14 @@ export function useUploadBook() {
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState<UploadStage>('idle');
   const queryClient = useQueryClient();
+  // Store filename for toast message (API response doesn't include title)
+  const currentFileRef = useRef<string>('');
 
   const mutation = useMutation<UploadBookResponse, ApiError, File>({
     mutationFn: async (file: File) => {
       setStage('uploading');
       setProgress(0);
+      currentFileRef.current = file.name;
 
       const result = await uploadBook(file, {
         onProgress: (percent) => {
@@ -61,6 +73,14 @@ export function useUploadBook() {
       setStage('done');
       setProgress(100);
       queryClient.invalidateQueries({ queryKey: ['books'] });
+      // Also invalidate search queries so new book appears in search results (AC #4)
+      queryClient.invalidateQueries({ queryKey: ['search'] });
+
+      // Show success toast with book title (AC #1, #2)
+      const bookTitle = getBookTitleFromFilename(currentFileRef.current);
+      toast.success(STRINGS.UPLOAD_SUCCESS_TOAST(bookTitle), {
+        duration: 3000,
+      });
     },
     onError: () => {
       setStage('error');

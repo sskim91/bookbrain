@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Upload, X, FileText } from 'lucide-react';
+import { Upload, X, FileText, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -51,6 +51,11 @@ export function UploadDialog() {
     }
   }, [resetUpload, selectedFile, upload]);
 
+  const handleUploadAnother = useCallback(() => {
+    setSelectedFile(null);
+    resetUpload();
+  }, [resetUpload]);
+
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
       // Prevent closing dialog during upload
@@ -82,8 +87,26 @@ export function UploadDialog() {
     }
 
     // Uploading/processing state
-    if (isUploading || stage === 'done') {
+    if (isUploading) {
       return <UploadProgress stage={stage} progress={progress} />;
+    }
+
+    // Done state - show progress with upload another button (AC #3)
+    if (stage === 'done') {
+      return (
+        <div className="space-y-4">
+          <UploadProgress stage={stage} progress={progress} />
+          <Button
+            variant="outline"
+            onClick={handleUploadAnother}
+            className="w-full"
+            aria-label={STRINGS.UPLOAD_ANOTHER_BUTTON}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            {STRINGS.UPLOAD_ANOTHER_BUTTON}
+          </Button>
+        </div>
+      );
     }
 
     // Idle state - no file selected
