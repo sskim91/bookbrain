@@ -21,9 +21,15 @@ class TestUploadBook:
 
         with (
             patch(
-                "bookbrain.api.routes.books.save_uploaded_file",
+                "bookbrain.api.routes.books.save_to_temp_for_indexing",
                 new_callable=AsyncMock,
-            ) as mock_save,
+            ) as mock_save_temp,
+            patch(
+                "bookbrain.api.routes.books.settings",
+            ) as mock_settings,
+            patch(
+                "bookbrain.api.routes.books.move_temp_to_local_storage",
+            ) as mock_move,
             patch(
                 "bookbrain.api.routes.books.book_repository.create_book",
                 new_callable=AsyncMock,
@@ -40,7 +46,9 @@ class TestUploadBook:
                 new_callable=AsyncMock,
             ) as mock_index,
         ):
-            mock_save.return_value = "/tmp/test.pdf"
+            mock_save_temp.return_value = "/tmp/temp.pdf"
+            mock_settings.s3_enabled = False
+            mock_move.return_value = "/storage/test.pdf"
             mock_create.return_value = 1
             mock_parse.return_value = MagicMock(pages=[], total_pages=10)
             mock_chunk.return_value = MagicMock(chunks=[])
@@ -104,9 +112,15 @@ class TestUploadBook:
 
         with (
             patch(
-                "bookbrain.api.routes.books.save_uploaded_file",
+                "bookbrain.api.routes.books.save_to_temp_for_indexing",
                 new_callable=AsyncMock,
-            ) as mock_save,
+            ) as mock_save_temp,
+            patch(
+                "bookbrain.api.routes.books.settings",
+            ) as mock_settings,
+            patch(
+                "bookbrain.api.routes.books.move_temp_to_local_storage",
+            ) as mock_move,
             patch(
                 "bookbrain.api.routes.books.book_repository.create_book",
                 new_callable=AsyncMock,
@@ -123,7 +137,9 @@ class TestUploadBook:
                 new_callable=AsyncMock,
             ) as mock_index,
         ):
-            mock_save.return_value = "/tmp/test.pdf"
+            mock_save_temp.return_value = "/tmp/temp.pdf"
+            mock_settings.s3_enabled = False
+            mock_move.return_value = "/storage/test.pdf"
             mock_create.return_value = 1
             mock_parse.return_value = MagicMock(pages=[], total_pages=10)
             mock_chunk.return_value = MagicMock(chunks=[])
@@ -152,35 +168,26 @@ class TestUploadBook:
             assert call_kwargs["title"] == "My Awesome Book"
 
     def test_upload_cleanup_on_indexing_failure(self):
-        """Test that book record and file are cleaned up on indexing failure."""
+        """Test that temp file is cleaned up on indexing failure."""
         pdf_content = b"%PDF-1.4 test content"
 
         with (
             patch(
-                "bookbrain.api.routes.books.save_uploaded_file",
+                "bookbrain.api.routes.books.save_to_temp_for_indexing",
                 new_callable=AsyncMock,
-            ) as mock_save,
+            ) as mock_save_temp,
             patch(
-                "bookbrain.api.routes.books.book_repository.create_book",
-                new_callable=AsyncMock,
-            ) as mock_create,
-            patch(
-                "bookbrain.api.routes.books.book_repository.delete_book",
-                new_callable=AsyncMock,
-            ) as mock_delete,
+                "bookbrain.api.routes.books.cleanup_temp_file",
+            ) as mock_cleanup,
             patch(
                 "bookbrain.api.routes.books.parse_pdf",
                 new_callable=AsyncMock,
             ) as mock_parse,
-            patch("os.path.exists") as mock_exists,
-            patch("os.remove") as mock_remove,
         ):
             from bookbrain.core.exceptions import IndexingError
 
-            mock_save.return_value = "/tmp/test.pdf"
-            mock_create.return_value = 1
+            mock_save_temp.return_value = "/tmp/temp.pdf"
             mock_parse.side_effect = IndexingError("Parse failed")
-            mock_exists.return_value = True
 
             response = client.post(
                 "/api/books",
@@ -191,9 +198,8 @@ class TestUploadBook:
             data = response.json()
             assert data["detail"]["error"]["code"] == "INDEXING_FAILED"
 
-            # Verify cleanup was attempted
-            mock_delete.assert_called_once_with(1)
-            mock_remove.assert_called_once_with("/tmp/test.pdf")
+            # Verify temp file cleanup was attempted
+            mock_cleanup.assert_called_with("/tmp/temp.pdf")
 
 
 class TestGetBooks:

@@ -20,11 +20,15 @@ from bookbrain.repositories.vector_repository import delete_chunks_by_book_id
 from bookbrain.services.chunker import chunk_text
 from bookbrain.services.indexer import index_book
 from bookbrain.services.parser import parse_pdf
+from bookbrain.core.config import settings
 from bookbrain.services.storage import (
+    cleanup_temp_file,
     delete_parsed_result_from_s3,
     delete_stored_file,
+    move_temp_to_local_storage,
     save_parsed_result_to_s3,
-    save_uploaded_file,
+    save_to_temp_for_indexing,
+    upload_temp_to_s3,
 )
 
 logger = logging.getLogger(__name__)
@@ -105,16 +109,30 @@ async def upload_book(
         HTTPException: 400 for invalid file format, 500 for indexing errors
     """
     file_path: str | None = None
+    temp_path: str | None = None
     book_id: int | None = None
 
     try:
         # 1. Validate file format (async for Magic Number check)
         await validate_pdf_file(file)
 
-        # 2. Save file to disk
-        file_path = await save_uploaded_file(file)
+        # 2. Save to temp file first (for parsing without double I/O)
+        temp_path = await save_to_temp_for_indexing(file)
 
-        # 3. Create book record
+        # 3. Parse PDF from temp file (local, fast - no S3 round trip)
+        parse_result = await parse_pdf(temp_path)
+
+        # 4. Move/upload to permanent storage after successful parsing
+        if settings.s3_enabled:
+            file_path = upload_temp_to_s3(temp_path)
+            cleanup_temp_file(temp_path)  # S3 upload done, cleanup temp
+            temp_path = None  # Mark as cleaned
+        else:
+            # Move temp to permanent local storage
+            file_path = move_temp_to_local_storage(temp_path)
+            temp_path = None  # Temp file moved, no longer exists
+
+        # 5. Create book record with final storage path
         book_title = title or (file.filename or "Untitled").replace(".pdf", "")
         book_id = await book_repository.create_book(
             title=book_title,
@@ -122,10 +140,7 @@ async def upload_book(
             author=author,
         )
 
-        # 4. Parse PDF
-        parse_result = await parse_pdf(file_path)
-
-        # 5. Save parsed result to S3 (optional, non-blocking on failure)
+        # 6. Save parsed result to S3 (optional, non-blocking on failure)
         parsed_result_path = save_parsed_result_to_s3(
             book_id, parse_result.raw_response
         )
@@ -145,6 +160,7 @@ async def upload_book(
         )
 
     except InvalidFileFormatError as e:
+        cleanup_temp_file(temp_path)
         raise HTTPException(
             status_code=400,
             detail={
@@ -157,6 +173,7 @@ async def upload_book(
         ) from e
 
     except DuplicateBookError as e:
+        cleanup_temp_file(temp_path)
         raise HTTPException(
             status_code=409,
             detail={
@@ -169,6 +186,9 @@ async def upload_book(
         ) from e
 
     except IndexingError as e:
+        # Cleanup temp file
+        cleanup_temp_file(temp_path)
+
         # Cleanup on failure
         if book_id is not None:
             try:
@@ -197,6 +217,9 @@ async def upload_book(
 
     except Exception as e:
         logger.exception(f"Unexpected error during book upload: {e}")
+
+        # Cleanup temp file
+        cleanup_temp_file(temp_path)
 
         # Cleanup on failure
         if book_id is not None:

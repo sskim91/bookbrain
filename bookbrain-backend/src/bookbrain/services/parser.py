@@ -9,6 +9,7 @@ import httpx
 from bookbrain.core.config import settings
 from bookbrain.core.exceptions import PDFReadError, StormParseAPIError
 from bookbrain.models.parser import ParsedDocument, ParsedPage, ParseResult
+from bookbrain.services.storage import download_from_s3_to_temp
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +26,11 @@ async def parse_pdf(file_path: str, language: str = "ko") -> ParseResult:
     """
     Parse a PDF file using Storm Parse API.
 
+    Supports both local file paths and S3 URIs (s3://bucket/key).
+    For S3 files, downloads to a temporary file before parsing.
+
     Args:
-        file_path: Path to the PDF file to parse.
+        file_path: Path to the PDF file (local path or S3 URI).
         language: Parsing language (default: "ko" for Korean).
 
     Returns:
@@ -36,6 +40,16 @@ async def parse_pdf(file_path: str, language: str = "ko") -> ParseResult:
         PDFReadError: If the PDF file cannot be read.
         StormParseAPIError: If the Storm Parse API call fails.
     """
+    # Handle S3 URIs
+    if file_path.startswith("s3://"):
+        return await _parse_pdf_from_s3(file_path, language)
+
+    # Handle local files
+    return await _parse_pdf_from_local(file_path, language)
+
+
+async def _parse_pdf_from_local(file_path: str, language: str) -> ParseResult:
+    """Parse PDF from local file path."""
     path = Path(file_path)
 
     if not path.exists():
@@ -45,11 +59,44 @@ async def parse_pdf(file_path: str, language: str = "ko") -> ParseResult:
         raise PDFReadError(file_path)
 
     # Submit parse request and get jobId.
-    # Path object passed to handle file opening inside _submit_parse_request.
     job_id = await _submit_parse_request(path, language)
 
     # Poll for result until completion
     return await _poll_for_result(job_id)
+
+
+async def _parse_pdf_from_s3(s3_uri: str, language: str) -> ParseResult:
+    """
+    Parse PDF from S3 by downloading to a temporary file.
+
+    Args:
+        s3_uri: S3 URI (s3://bucket/key)
+        language: Parsing language
+
+    Returns:
+        ParseResult containing ParsedDocument and raw API response.
+
+    Raises:
+        PDFReadError: If S3 download fails.
+        StormParseAPIError: If the Storm Parse API call fails.
+    """
+    logger.info(f"Downloading PDF from S3 for parsing: {s3_uri}")
+
+    try:
+        with download_from_s3_to_temp(s3_uri) as temp_path:
+            # Submit parse request with temp file
+            job_id = await _submit_parse_request(temp_path, language)
+
+            # Poll for result until completion
+            return await _poll_for_result(job_id)
+    except ValueError as e:
+        # Invalid S3 URI format
+        raise PDFReadError(s3_uri, cause=e)
+    except Exception as e:
+        # S3 download failure (ClientError, etc.)
+        if "ClientError" in type(e).__name__ or "S3" in str(type(e)):
+            raise PDFReadError(s3_uri, cause=e)
+        raise
 
 
 async def _submit_parse_request(
