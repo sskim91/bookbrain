@@ -1,13 +1,9 @@
 """Books API endpoints."""
 
 import logging
-import os
-import uuid
-from pathlib import Path
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
-from bookbrain.core.config import settings
 from bookbrain.core.exceptions import (
     DuplicateBookError,
     IndexingError,
@@ -24,37 +20,16 @@ from bookbrain.repositories.vector_repository import delete_chunks_by_book_id
 from bookbrain.services.chunker import chunk_text
 from bookbrain.services.indexer import index_book
 from bookbrain.services.parser import parse_pdf
+from bookbrain.services.storage import (
+    delete_parsed_result_from_s3,
+    delete_stored_file,
+    save_parsed_result_to_s3,
+    save_uploaded_file,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/books", tags=["books"])
-
-
-CHUNK_SIZE = 64 * 1024  # 64KB chunks for streaming file writes
-
-
-async def save_uploaded_file(file: UploadFile) -> str:
-    """
-    Save uploaded file to disk using streaming to avoid memory exhaustion.
-
-    Args:
-        file: The uploaded file
-
-    Returns:
-        The path to the saved file
-    """
-    storage_dir = Path(settings.pdf_storage_dir)
-    storage_dir.mkdir(parents=True, exist_ok=True)
-
-    file_id = str(uuid.uuid4())
-    file_path = storage_dir / f"{file_id}.pdf"
-
-    # Stream file to disk in chunks to avoid loading entire file into memory
-    with open(file_path, "wb") as f:
-        while chunk := await file.read(CHUNK_SIZE):
-            f.write(chunk)
-
-    return str(file_path)
 
 
 # PDF Magic Number (file signature)
@@ -148,12 +123,19 @@ async def upload_book(
         )
 
         # 4. Parse PDF
-        parsed_doc = await parse_pdf(file_path)
+        parse_result = await parse_pdf(file_path)
 
-        # 5. Chunk text
-        chunked_doc = chunk_text(parsed_doc)
+        # 5. Save parsed result to S3 (optional, non-blocking on failure)
+        parsed_result_path = save_parsed_result_to_s3(
+            book_id, parse_result.raw_response
+        )
+        if parsed_result_path:
+            logger.info(f"Saved parsed result to: {parsed_result_path}")
 
-        # 6. Index (embed + store in Qdrant)
+        # 6. Chunk text
+        chunked_doc = chunk_text(parse_result.document)
+
+        # 7. Index (embed + store in Qdrant)
         result = await index_book(book_id, chunked_doc)
 
         return IndexingResponse(
@@ -194,11 +176,9 @@ async def upload_book(
             except Exception as cleanup_error:
                 logger.error(f"Failed to cleanup book {book_id}: {cleanup_error}")
 
-        if file_path and os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-            except Exception as cleanup_error:
-                logger.error(f"Failed to cleanup file {file_path}: {cleanup_error}")
+        if file_path:
+            if not delete_stored_file(file_path):
+                logger.error(f"Failed to cleanup file {file_path}")
 
         raise HTTPException(
             status_code=500,
@@ -221,11 +201,9 @@ async def upload_book(
             except Exception as cleanup_error:
                 logger.error(f"Failed to cleanup book {book_id}: {cleanup_error}")
 
-        if file_path and os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-            except Exception as cleanup_error:
-                logger.error(f"Failed to cleanup file {file_path}: {cleanup_error}")
+        if file_path:
+            if not delete_stored_file(file_path):
+                logger.error(f"Failed to cleanup file {file_path}")
 
         raise HTTPException(
             status_code=500,
@@ -318,13 +296,15 @@ async def delete_book(book_id: int) -> DeleteResponse:
             },
         )
 
-    # Delete PDF file
+    # Delete PDF file (S3 or local)
     file_path = book.get("file_path")
-    if file_path and os.path.exists(file_path):
-        try:
-            os.remove(file_path)
-        except Exception as e:
-            logger.error(f"Failed to delete file {file_path}: {e}")
-            # Don't fail the request, file cleanup is best-effort
+    if file_path:
+        if not delete_stored_file(file_path):
+            logger.warning(f"Could not delete file: {file_path}")
+        # Don't fail the request, file cleanup is best-effort
+
+    # Delete parsed result from S3
+    if not delete_parsed_result_from_s3(book_id):
+        logger.warning(f"Could not delete parsed result for book: {book_id}")
 
     return DeleteResponse(deleted=True)

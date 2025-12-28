@@ -5,7 +5,7 @@ import respx
 from httpx import Response
 
 from bookbrain.core.exceptions import PDFReadError, StormParseAPIError
-from bookbrain.models.parser import ParsedDocument
+from bookbrain.models.parser import ParsedDocument, ParseResult
 from bookbrain.services.parser import parse_pdf
 
 
@@ -65,17 +65,21 @@ class TestParsePdf:
 
         result = await parse_pdf(str(pdf_file))
 
-        assert isinstance(result, ParsedDocument)
-        assert result.total_pages == 2
-        assert len(result.pages) == 2
-        assert result.pages[0].page_number == 1
-        assert result.pages[0].content == "Page 1 content"
-        assert len(result.pages[0].tables) == 1
-        assert result.pages[0].tables[0]["id"] == "table1"
-        assert result.pages[1].page_number == 2
-        assert result.pages[1].content == "Page 2 content"
-        assert len(result.pages[1].figures) == 1
-        assert result.pages[1].figures[0]["id"] == "fig1"
+        assert isinstance(result, ParseResult)
+        assert isinstance(result.document, ParsedDocument)
+        assert result.document.total_pages == 2
+        assert len(result.document.pages) == 2
+        assert result.document.pages[0].page_number == 1
+        assert result.document.pages[0].content == "Page 1 content"
+        assert len(result.document.pages[0].tables) == 1
+        assert result.document.pages[0].tables[0]["id"] == "table1"
+        assert result.document.pages[1].page_number == 2
+        assert result.document.pages[1].content == "Page 2 content"
+        assert len(result.document.pages[1].figures) == 1
+        assert result.document.pages[1].figures[0]["id"] == "fig1"
+        # Check raw_response is included
+        assert result.raw_response is not None
+        assert result.raw_response["jobId"] == "test-job-123"
         assert submit_route.called
         assert poll_route.called
 
@@ -156,7 +160,7 @@ class TestParsePdf:
 
         result = await parse_pdf(str(pdf_file))
 
-        assert result.total_pages == 1
+        assert result.document.total_pages == 1
         assert call_count == 2  # First timeout, then success
 
     @pytest.mark.asyncio
@@ -201,7 +205,7 @@ class TestParsePdf:
 
         result = await parse_pdf(str(pdf_file))
 
-        assert result.pages[0].content == "Retry success"
+        assert result.document.pages[0].content == "Retry success"
         assert call_count == 2
 
     @pytest.mark.asyncio
@@ -241,7 +245,7 @@ class TestParsePdf:
 
         result = await parse_pdf(str(pdf_file))
 
-        assert result.pages[0].content == "Final content"
+        assert result.document.pages[0].content == "Final content"
         assert poll_count == 4  # REQUESTED -> ACCEPTED -> PROCESSED -> COMPLETED
 
     @pytest.mark.asyncio
@@ -302,6 +306,6 @@ class TestParsePdf:
 
         result = await parse_pdf(str(pdf_file))
 
-        assert result.pages[0].page_number == 1
-        assert result.pages[1].page_number == 2
-        assert result.pages[2].page_number == 3
+        assert result.document.pages[0].page_number == 1
+        assert result.document.pages[1].page_number == 2
+        assert result.document.pages[2].page_number == 3

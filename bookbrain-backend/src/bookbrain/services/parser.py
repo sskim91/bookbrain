@@ -8,7 +8,7 @@ import httpx
 
 from bookbrain.core.config import settings
 from bookbrain.core.exceptions import PDFReadError, StormParseAPIError
-from bookbrain.models.parser import ParsedDocument, ParsedPage
+from bookbrain.models.parser import ParsedDocument, ParsedPage, ParseResult
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ STATE_COMPLETED = "COMPLETED"
 TERMINAL_STATES = {"COMPLETED", "FAILED", "ERROR"}
 
 
-async def parse_pdf(file_path: str, language: str = "ko") -> ParsedDocument:
+async def parse_pdf(file_path: str, language: str = "ko") -> ParseResult:
     """
     Parse a PDF file using Storm Parse API.
 
@@ -30,7 +30,7 @@ async def parse_pdf(file_path: str, language: str = "ko") -> ParsedDocument:
         language: Parsing language (default: "ko" for Korean).
 
     Returns:
-        ParsedDocument containing extracted text and metadata.
+        ParseResult containing ParsedDocument and raw API response.
 
     Raises:
         PDFReadError: If the PDF file cannot be read.
@@ -141,7 +141,7 @@ async def _submit_parse_request(
         raise StormParseAPIError(f"Storm Parse API HTTP error: {e}", cause=e)
 
 
-async def _poll_for_result(job_id: str) -> ParsedDocument:
+async def _poll_for_result(job_id: str) -> ParseResult:
     """
     Poll Storm Parse API for parsing result.
 
@@ -149,7 +149,7 @@ async def _poll_for_result(job_id: str) -> ParsedDocument:
         job_id: Job ID from the parse request.
 
     Returns:
-        ParsedDocument when parsing is complete.
+        ParseResult containing ParsedDocument and raw API response.
 
     Raises:
         StormParseAPIError: If polling fails or job fails.
@@ -177,7 +177,8 @@ async def _poll_for_result(job_id: str) -> ParsedDocument:
                 logger.debug(f"Job {job_id} state: {state}")
 
                 if state == STATE_COMPLETED:
-                    return _parse_job_response(data)
+                    document = _parse_job_response(data)
+                    return ParseResult(document=document, raw_response=data)
 
                 if state in TERMINAL_STATES and state != STATE_COMPLETED:
                     raise StormParseAPIError(

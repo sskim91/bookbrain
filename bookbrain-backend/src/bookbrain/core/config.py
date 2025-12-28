@@ -39,5 +39,13 @@ class Settings(BaseSettings):
     pdf_storage_dir: str = "data/pdfs"
     max_upload_size: int = 100 * 1024 * 1024  # 100MB
 
+    # S3 Storage (Oracle Object Storage with S3 compatibility)
+    s3_enabled: bool = False  # Set to True to use S3 instead of local storage
+    s3_endpoint_url: str = ""  # e.g., https://namespace.compat.objectstorage.region.oraclecloud.com
+    s3_access_key: str = ""
+    s3_secret_key: str = ""
+    s3_bucket_name: str = ""
+    s3_region: str = "ap-seoul-1"
+
 
 settings = Settings()

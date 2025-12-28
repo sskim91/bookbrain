@@ -1,5 +1,7 @@
 """Parser data models."""
 
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -18,3 +20,10 @@ class ParsedDocument(BaseModel):
     pages: list[ParsedPage]
     total_pages: int
     metadata: dict | None = None
+
+
+class ParseResult(BaseModel):
+    """Result of parsing a PDF, including raw API response for storage."""
+
+    document: ParsedDocument
+    raw_response: dict[str, Any]
