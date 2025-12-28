@@ -176,6 +176,10 @@ async def upload_book(
             except Exception as cleanup_error:
                 logger.error(f"Failed to cleanup book {book_id}: {cleanup_error}")
 
+            # Cleanup parsed result from S3
+            if not delete_parsed_result_from_s3(book_id):
+                logger.error(f"Failed to cleanup parsed result for book {book_id}")
+
         if file_path:
             if not delete_stored_file(file_path):
                 logger.error(f"Failed to cleanup file {file_path}")
@@ -200,6 +204,10 @@ async def upload_book(
                 await book_repository.delete_book(book_id)
             except Exception as cleanup_error:
                 logger.error(f"Failed to cleanup book {book_id}: {cleanup_error}")
+
+            # Cleanup parsed result from S3
+            if not delete_parsed_result_from_s3(book_id):
+                logger.error(f"Failed to cleanup parsed result for book {book_id}")
 
         if file_path:
             if not delete_stored_file(file_path):

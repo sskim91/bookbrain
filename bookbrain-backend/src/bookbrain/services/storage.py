@@ -33,13 +33,16 @@ def get_s3_client():
 
 async def save_file_to_s3(file: UploadFile) -> str:
     """
-    Upload file to S3 (Oracle Object Storage).
+    Upload file to S3 (Oracle Object Storage) using streaming.
+
+    Uses a temporary file to avoid loading entire file into memory,
+    preventing OOM issues with large PDF files.
 
     Args:
         file: The uploaded file
 
     Returns:
-        The S3 object key (path in bucket)
+        The S3 URI (s3://bucket/key)
 
     Raises:
         ClientError: If upload fails
@@ -48,23 +51,36 @@ async def save_file_to_s3(file: UploadFile) -> str:
     object_key = f"pdfs/{file_id}.pdf"
 
     s3_client = get_s3_client()
-
-    # Read file content
-    content = await file.read()
-    await file.seek(0)  # Reset for potential re-reads
+    temp_file = None
 
     try:
-        s3_client.put_object(
-            Bucket=settings.s3_bucket_name,
-            Key=object_key,
-            Body=content,
-            ContentType="application/pdf",
+        # Stream to temp file first (avoids loading entire file into memory)
+        temp_file = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
+        while chunk := await file.read(CHUNK_SIZE):
+            temp_file.write(chunk)
+        temp_file.close()
+
+        # Upload from temp file using streaming
+        s3_client.upload_file(
+            temp_file.name,
+            settings.s3_bucket_name,
+            object_key,
+            ExtraArgs={"ContentType": "application/pdf"},
         )
         logger.info(f"Uploaded file to S3: {object_key}")
         return f"s3://{settings.s3_bucket_name}/{object_key}"
+
     except ClientError as e:
         logger.error(f"Failed to upload to S3: {e}")
         raise
+
+    finally:
+        # Cleanup temp file
+        if temp_file and os.path.exists(temp_file.name):
+            try:
+                os.remove(temp_file.name)
+            except OSError:
+                pass
 
 
 async def save_file_to_local(file: UploadFile) -> str:
