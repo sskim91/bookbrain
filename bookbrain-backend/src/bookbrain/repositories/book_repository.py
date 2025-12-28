@@ -227,6 +227,37 @@ async def delete_book(
         return await execute(connection, auto_commit=True)
 
 
+async def exists_by_title(
+    title: str,
+    conn: psycopg.AsyncConnection | None = None,
+) -> bool:
+    """
+    Check if a book with the given title already exists.
+
+    Args:
+        title: Book title to check
+        conn: Optional existing database connection
+
+    Returns:
+        True if a book with the title exists, False otherwise
+    """
+    query = """
+        SELECT EXISTS(SELECT 1 FROM books WHERE title = %s)
+    """
+
+    async def execute(connection: psycopg.AsyncConnection) -> bool:
+        async with connection.cursor(row_factory=dict_row) as cur:
+            await cur.execute(query, (title,))
+            result = await cur.fetchone()
+            return result["exists"] if result else False
+
+    if conn is not None:
+        return await execute(conn)
+
+    async with get_db() as connection:
+        return await execute(connection)
+
+
 async def update_book_embedding_model(
     book_id: int,
     embedding_model: str,
