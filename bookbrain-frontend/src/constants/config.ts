@@ -9,7 +9,7 @@ export const CACHE_CONFIG = {
   /** Time before cached data is garbage collected (10 minutes) */
   GC_TIME: 10 * 60 * 1000,
   /** Number of retry attempts for failed queries */
-  RETRY_COUNT: 1,
+  RETRY_COUNT: 0,
 } as const;
 
 export const SEARCH_CONFIG = {

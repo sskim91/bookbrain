@@ -112,8 +112,9 @@ export function BookList() {
 
   if (isError) {
     return (
-      <div className="py-4 text-center text-sm text-destructive">
-        {STRINGS.BOOK_LIST_ERROR}
+      <div className="py-4 text-center">
+        <p className="text-sm text-destructive">{STRINGS.BOOK_LIST_ERROR}</p>
+        <p className="text-xs text-muted-foreground mt-1">{STRINGS.BOOK_LIST_ERROR_HINT}</p>
       </div>
     );
   }

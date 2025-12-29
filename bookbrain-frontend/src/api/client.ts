@@ -1,6 +1,7 @@
 import type { SearchResponse } from '@/types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_TIMEOUT_MS = 2000; // 2 seconds
 
 export class ApiError extends Error {
   code: string;
@@ -23,13 +24,29 @@ export async function apiFetch<T>(
   options?: RequestInit
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+    });
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new ApiError('TIMEOUT_ERROR', '서버 응답 시간이 초과되었습니다');
+    }
+    // Network error (server down, no internet, etc.)
+    throw new ApiError('NETWORK_ERROR', '서버에 연결할 수 없습니다');
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));

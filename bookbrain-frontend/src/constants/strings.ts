@@ -99,6 +99,7 @@ export const STRINGS = {
   BOOK_LIST_PAGE_COUNT: (pages: number) => `${pages}p`,
   BOOK_LIST_LOADING: '책 목록을 불러오는 중...',
   BOOK_LIST_ERROR: '책 목록을 불러오는 데 실패했습니다',
+  BOOK_LIST_ERROR_HINT: '잠시 후 다시 시도해주세요',
 
   // Book Delete
   BOOK_DELETE_BUTTON_ARIA_LABEL: '책 삭제',
