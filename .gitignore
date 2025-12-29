@@ -275,6 +275,7 @@ sketch
 test-results/
 playwright-report/
 playwright/.cache/
+.playwright-mcp
 
 ### Docker
 docker-compose.override.yml
