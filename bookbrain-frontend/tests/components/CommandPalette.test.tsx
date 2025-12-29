@@ -143,7 +143,7 @@ describe('CommandPalette', () => {
       await vi.advanceTimersByTimeAsync(300);
 
       await waitFor(() => {
-        expect(searchBooks).toHaveBeenCalledWith('test');
+        expect(searchBooks).toHaveBeenCalledWith('test', 10, 0.3);
       });
 
       await waitFor(() => {
@@ -193,7 +193,7 @@ describe('CommandPalette', () => {
 
       // Now it should have been called with full query
       await waitFor(() => {
-        expect(searchBooks).toHaveBeenCalledWith('test');
+        expect(searchBooks).toHaveBeenCalledWith('test', 10, 0.3);
       });
     });
   });
@@ -325,7 +325,7 @@ describe('CommandPalette', () => {
       await waitFor(() => {
         expect(screen.getByText('Test Book')).toBeInTheDocument();
         expect(screen.getByText('p.42')).toBeInTheDocument();
-        expect(screen.getByText('0.95')).toBeInTheDocument();
+        expect(screen.getByText('95%')).toBeInTheDocument();
       });
     });
 

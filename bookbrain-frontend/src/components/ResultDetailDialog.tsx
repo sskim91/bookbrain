@@ -40,8 +40,8 @@ export function ResultDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[560px] max-h-[80vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-[560px] max-h-[80vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {result.title} · p.{result.page}
           </DialogTitle>
@@ -50,13 +50,15 @@ export function ResultDetailDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[60vh] pr-4">
-          <p className="text-sm whitespace-pre-wrap">{result.content}</p>
-        </ScrollArea>
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <p className="text-sm whitespace-pre-wrap pr-4">{result.content}</p>
+          </ScrollArea>
+        </div>
 
-        <div className="flex items-center justify-between pt-4 border-t">
+        <div className="flex-shrink-0 flex items-center justify-between pt-4 border-t">
           <span className="text-sm text-muted-foreground">
-            {(result.score ?? 0).toFixed(2)}
+            {Math.round((result.score ?? 0) * 100)}%
           </span>
           <div className="flex gap-2">
             <Button

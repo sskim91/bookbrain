@@ -40,7 +40,7 @@ describe('SearchResultCard', () => {
 
     it('renders similarity score (FR14)', () => {
       render(<SearchResultCard result={mockResult} />);
-      expect(screen.getByText('0.95')).toBeInTheDocument();
+      expect(screen.getByText('95%')).toBeInTheDocument();
     });
 
     it('renders content preview (FR15)', () => {
@@ -64,8 +64,8 @@ describe('SearchResultCard', () => {
     it('displays score in top-right area', () => {
       render(<SearchResultCard result={mockResult} />);
 
-      // ScoreIndicator should be present with correct score
-      expect(screen.getByText('0.95')).toBeInTheDocument();
+      // ScoreIndicator should be present with correct score (percentage format)
+      expect(screen.getByText('95%')).toBeInTheDocument();
     });
 
     it('displays Copy button', () => {

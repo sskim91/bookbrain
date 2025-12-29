@@ -33,7 +33,7 @@ export function ScoreIndicator({ score }: ScoreIndicatorProps) {
       )}
       aria-label={STRINGS.SCORE_ARIA_LABEL(percent)}
     >
-      {score.toFixed(2)}
+      {percent}%
     </span>
   );
 }

@@ -58,8 +58,8 @@ describe('ResultDetailDialog', () => {
     // Check content is displayed
     expect(screen.getByText(/Spring Security는 인증/)).toBeInTheDocument();
 
-    // Check score is displayed
-    expect(screen.getByText('0.92')).toBeInTheDocument();
+    // Check score is displayed (percentage format)
+    expect(screen.getByText('92%')).toBeInTheDocument();
 
     // Check copy and close buttons exist in dialog
     const dialog = screen.getByRole('dialog');
@@ -196,6 +196,6 @@ describe('ResultDetailDialog', () => {
       />
     );
 
-    expect(screen.getByText('0.88')).toBeInTheDocument();
+    expect(screen.getByText('88%')).toBeInTheDocument();
   });
 });

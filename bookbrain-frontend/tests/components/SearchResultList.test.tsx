@@ -66,7 +66,7 @@ describe('SearchResultList', () => {
     expect(
       screen.getByText('This is test content from the book.')
     ).toBeInTheDocument();
-    expect(screen.getByText('0.95')).toBeInTheDocument(); // Score from ScoreIndicator
+    expect(screen.getByText('95%')).toBeInTheDocument(); // Score from ScoreIndicator (percentage format)
   });
 
   it('renders multiple results with SearchResultCard', () => {
