@@ -7,7 +7,6 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Copy, Check, Loader2, X } from 'lucide-react';
 import { useClipboard } from '@/hooks/useClipboard';
 import { formatMarkdown } from '@/lib/formatMarkdown';
@@ -50,10 +49,8 @@ export function ResultDetailDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full">
-            <p className="text-sm whitespace-pre-wrap pr-4">{result.content}</p>
-          </ScrollArea>
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <p className="text-sm whitespace-pre-wrap pr-2">{result.content}</p>
         </div>
 
         <div className="flex-shrink-0 flex items-center justify-between pt-4 border-t">
