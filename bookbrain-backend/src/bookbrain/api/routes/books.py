@@ -26,7 +26,8 @@ from bookbrain.services.storage import (
     delete_parsed_result_from_s3,
     delete_stored_file,
     move_temp_to_local_storage,
-    save_parsed_result_to_s3,
+    save_parsed_result,
+    save_parsed_result_to_local,
     save_to_temp_for_indexing,
     upload_temp_to_s3,
 )
@@ -122,11 +123,29 @@ async def upload_book(
         # 3. Parse PDF from temp file (local, fast - no S3 round trip)
         parse_result = await parse_pdf(temp_path)
 
+        # 3.5. CRITICAL: Save parsed result to local IMMEDIATELY after parsing
+        # This preserves Storm Parse API credits even if subsequent steps fail
+        import uuid as uuid_module
+        temp_parse_id = str(uuid_module.uuid4())
+        temp_parsed_path = save_parsed_result_to_local(
+            temp_parse_id, parse_result.raw_response
+        )
+        if temp_parsed_path:
+            logger.info(f"Saved parsed result backup: {temp_parsed_path}")
+        else:
+            logger.warning("Failed to save parsed result backup!")
+
         # 4. Move/upload to permanent storage after successful parsing
         if settings.s3_enabled:
-            file_path = upload_temp_to_s3(temp_path)
-            cleanup_temp_file(temp_path)  # S3 upload done, cleanup temp
-            temp_path = None  # Mark as cleaned
+            try:
+                file_path = upload_temp_to_s3(temp_path)
+                cleanup_temp_file(temp_path)  # S3 upload done, cleanup temp
+                temp_path = None  # Mark as cleaned
+            except Exception as s3_err:
+                # Fallback to local storage if S3 upload fails
+                logger.warning(f"S3 upload failed, falling back to local: {s3_err}")
+                file_path = move_temp_to_local_storage(temp_path)
+                temp_path = None
         else:
             # Move temp to permanent local storage
             file_path = move_temp_to_local_storage(temp_path)
@@ -140,10 +159,8 @@ async def upload_book(
             author=author,
         )
 
-        # 6. Save parsed result to S3 (optional, non-blocking on failure)
-        parsed_result_path = save_parsed_result_to_s3(
-            book_id, parse_result.raw_response
-        )
+        # 6. Save parsed result with book_id (rename/link from temp)
+        parsed_result_path = save_parsed_result(book_id, parse_result.raw_response)
         if parsed_result_path:
             logger.info(f"Saved parsed result to: {parsed_result_path}")
 

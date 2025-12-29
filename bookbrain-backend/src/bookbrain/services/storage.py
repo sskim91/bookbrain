@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 from fastapi import UploadFile
 
@@ -18,6 +19,14 @@ from bookbrain.core.config import settings
 logger = logging.getLogger(__name__)
 
 CHUNK_SIZE = 64 * 1024  # 64KB chunks for streaming
+
+# Fix for boto3 >= 1.36.0 checksum feature breaking S3-compatible APIs
+# Oracle Object Storage doesn't support the new checksum headers
+# See: https://stackoverflow.com/questions/79375793
+S3_CONFIG = Config(
+    request_checksum_calculation="when_required",
+    response_checksum_validation="when_required",
+)
 
 
 def get_s3_client():
@@ -28,6 +37,7 @@ def get_s3_client():
         aws_access_key_id=settings.s3_access_key,
         aws_secret_access_key=settings.s3_secret_key,
         region_name=settings.s3_region,
+        config=S3_CONFIG,
     )
 
 
@@ -142,6 +152,9 @@ def upload_temp_to_s3(temp_path: str) -> str:
     """
     Upload a local file to S3.
 
+    Uses put_object with explicit Content-Length for Oracle Object Storage
+    compatibility (avoids MissingContentLength error with upload_file).
+
     Args:
         temp_path: Path to the local file
 
@@ -157,14 +170,18 @@ def upload_temp_to_s3(temp_path: str) -> str:
     s3_client = get_s3_client()
 
     try:
-        s3_client.upload_file(
-            temp_path,
-            settings.s3_bucket_name,
-            object_key,
-            ExtraArgs={"ContentType": "application/pdf"},
-        )
+        # Use put_object with explicit Content-Length for Oracle Object Storage
+        file_size = os.path.getsize(temp_path)
+        with open(temp_path, "rb") as f:
+            s3_client.put_object(
+                Bucket=settings.s3_bucket_name,
+                Key=object_key,
+                Body=f,
+                ContentType="application/pdf",
+                ContentLength=file_size,
+            )
         s3_uri = f"s3://{settings.s3_bucket_name}/{object_key}"
-        logger.info(f"Uploaded temp file to S3: {object_key}")
+        logger.info(f"Uploaded temp file to S3: {object_key} ({file_size} bytes)")
         return s3_uri
     except ClientError as e:
         logger.error(f"Failed to upload to S3: {e}")
@@ -295,6 +312,65 @@ def delete_stored_file(file_path: str) -> bool:
 # =============================================================================
 # JSON Storage (for Storm Parse results)
 # =============================================================================
+
+PARSED_RESULTS_DIR = "data/parsed"
+
+
+def save_parsed_result_to_local(
+    identifier: str, response_data: dict[str, Any]
+) -> str | None:
+    """
+    Save Storm Parse API response to local filesystem as JSON.
+
+    This is a critical fallback to preserve parsing results even if S3 fails,
+    preventing loss of Storm Parse API credits.
+
+    Args:
+        identifier: Unique identifier for the file (book_id or UUID)
+        response_data: The raw Storm Parse API response
+
+    Returns:
+        The local file path if successful, None if failed
+    """
+    parsed_dir = Path(PARSED_RESULTS_DIR)
+    parsed_dir.mkdir(parents=True, exist_ok=True)
+
+    file_path = parsed_dir / f"{identifier}.json"
+
+    try:
+        json_content = json.dumps(response_data, ensure_ascii=False, indent=2)
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(json_content)
+        logger.info(f"Saved parsed result to local: {file_path}")
+        return str(file_path)
+    except (TypeError, ValueError, OSError) as e:
+        logger.error(f"Failed to save parsed result to local: {e}")
+        return None
+
+
+def save_parsed_result(book_id: int, response_data: dict[str, Any]) -> str | None:
+    """
+    Save Storm Parse API response to storage (S3 or local).
+
+    Always saves to local first as backup, then tries S3 if enabled.
+
+    Args:
+        book_id: The book ID for naming the file
+        response_data: The raw Storm Parse API response
+
+    Returns:
+        The storage path (S3 URI or local path) if successful, None if failed
+    """
+    # Always save to local first as backup (critical for credit preservation)
+    local_path = save_parsed_result_to_local(str(book_id), response_data)
+
+    # Try S3 if enabled
+    if settings.s3_enabled:
+        s3_path = save_parsed_result_to_s3(book_id, response_data)
+        if s3_path:
+            return s3_path
+
+    return local_path
 
 
 def save_parsed_result_to_s3(book_id: int, response_data: dict[str, Any]) -> str | None:
