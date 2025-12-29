@@ -11,3 +11,8 @@ export const CACHE_CONFIG = {
   /** Number of retry attempts for failed queries */
   RETRY_COUNT: 1,
 } as const;
+
+export const SEARCH_CONFIG = {
+  /** Minimum similarity score threshold (0.0-1.0) */
+  MIN_SCORE_THRESHOLD: 0.3,
+} as const;

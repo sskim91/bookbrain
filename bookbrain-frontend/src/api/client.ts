@@ -47,13 +47,15 @@ export async function apiFetch<T>(
  * Search books by query using semantic search.
  * @param query - The search query string
  * @param limit - Maximum number of results (default: 10)
+ * @param minScore - Minimum similarity score threshold (default: 0.3)
  */
 export async function searchBooks(
   query: string,
-  limit = 10
+  limit = 10,
+  minScore?: number
 ): Promise<SearchResponse> {
   return apiFetch<SearchResponse>('/api/search', {
     method: 'POST',
-    body: JSON.stringify({ query, limit }),
+    body: JSON.stringify({ query, limit, min_score: minScore }),
   });
 }

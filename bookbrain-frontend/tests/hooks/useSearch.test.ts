@@ -80,7 +80,7 @@ describe('useSearch', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(searchBooks).toHaveBeenCalledWith('test query');
+    expect(searchBooks).toHaveBeenCalledWith('test query', 10, 0.3);
     expect(result.current.data).toEqual(mockResponse);
   });
 
@@ -197,7 +197,7 @@ describe('useSearch', () => {
       expect(result.current.data).toEqual(mockResponse1);
     });
 
-    expect(searchBooks).toHaveBeenCalledWith('query1');
+    expect(searchBooks).toHaveBeenCalledWith('query1', 10, 0.3);
 
     // Change query
     rerender({ query: 'query2' });
@@ -206,7 +206,7 @@ describe('useSearch', () => {
       expect(result.current.data).toEqual(mockResponse2);
     });
 
-    expect(searchBooks).toHaveBeenCalledWith('query2');
+    expect(searchBooks).toHaveBeenCalledWith('query2', 10, 0.3);
     expect(searchBooks).toHaveBeenCalledTimes(2);
   });
 });
