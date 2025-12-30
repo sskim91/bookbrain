@@ -15,7 +15,7 @@ from bookbrain.core.exceptions import (
     PDFReadError,
 )
 from bookbrain.repositories import book_repository
-from bookbrain.services.chunker import chunk_text
+from bookbrain.services.sentence_chunker import chunk_text  # sentence-aware chunking
 from bookbrain.services.indexer import IndexingResult, index_book
 from bookbrain.services.parser import parse_pdf
 from bookbrain.services.storage import (

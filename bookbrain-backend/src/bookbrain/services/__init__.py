@@ -1,6 +1,6 @@
 """Services for BookBrain."""
 
-from bookbrain.services.chunker import chunk_text
+from bookbrain.services.sentence_chunker import chunk_text  # sentence-aware chunking
 from bookbrain.services.embedder import generate_embeddings
 from bookbrain.services.indexer import IndexingResult, index_book
 from bookbrain.services.parser import parse_pdf

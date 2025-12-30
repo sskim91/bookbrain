@@ -17,7 +17,7 @@ from bookbrain.models.schemas import (
 )
 from bookbrain.repositories import book_repository
 from bookbrain.repositories.vector_repository import delete_chunks_by_book_id
-from bookbrain.services.chunker import chunk_text
+from bookbrain.services.sentence_chunker import chunk_text  # sentence-aware chunking
 from bookbrain.services.indexer import index_book
 from bookbrain.services.parser import parse_pdf
 from bookbrain.core.config import settings
