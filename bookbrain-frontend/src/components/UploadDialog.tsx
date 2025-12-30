@@ -121,7 +121,7 @@ export function UploadDialog() {
         {/* Selected file card */}
         <div className="flex items-center gap-3 p-4 border rounded-lg bg-muted/30">
           <FileText className="h-8 w-8 text-muted-foreground flex-shrink-0" />
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 overflow-hidden">
             <p className="font-medium truncate">{selectedFile.name}</p>
             <p className="text-sm text-muted-foreground">
               {formatFileSize(selectedFile.size)}
@@ -164,7 +164,7 @@ export function UploadDialog() {
         </Button>
       </DialogTrigger>
       <DialogContent
-        className="sm:max-w-[560px]"
+        className="sm:max-w-[560px] overflow-hidden"
         onPointerDownOutside={(e) => {
           // Prevent closing on outside click during upload
           if (isUploading) {
@@ -189,7 +189,7 @@ export function UploadDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           {/* Book List Section (FR5, FR21) */}
           <BookList />
 

@@ -54,10 +54,11 @@ export function SearchResultCard({ result, onClick }: SearchResultCardProps) {
       role="article"
       tabIndex={0}
     >
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <span className="font-medium">{result.title}</span>
-          <span className="text-muted-foreground mx-2">·</span>
+      <div className="flex justify-between items-start gap-3 mb-3">
+        <div className="min-w-0 flex-1">
+          <span className="font-medium block truncate" title={result.title}>
+            {result.title}
+          </span>
           <span className="text-sm text-muted-foreground">p.{result.page}</span>
         </div>
         <ScoreIndicator score={result.score} />

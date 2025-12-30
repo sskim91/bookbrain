@@ -23,16 +23,18 @@ interface BookItemProps {
 function BookItem({ book, onDelete }: BookItemProps) {
   return (
     <div
-      className="group flex items-start gap-3 p-3 rounded-md hover:bg-muted/50 transition-colors"
+      className="group grid grid-cols-[auto_1fr_auto] items-start gap-3 p-3 rounded-md hover:bg-muted/50 transition-colors w-full"
       role="article"
       aria-label={book.title}
     >
       <BookOpen
-        className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5"
+        className="h-5 w-5 text-muted-foreground mt-0.5"
         aria-hidden="true"
       />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{book.title}</p>
+      <div className="min-w-0 overflow-hidden">
+        <p className="text-sm font-medium truncate" title={book.title}>
+          {book.title}
+        </p>
         <p className="text-xs text-muted-foreground">
           {STRINGS.BOOK_LIST_PAGE_COUNT(book.total_pages)} · {formatDate(book.created_at)}
         </p>
@@ -136,7 +138,7 @@ export function BookList() {
         {STRINGS.BOOK_LIST_TITLE(books.length)}
       </h3>
       <ScrollArea className="h-[200px] rounded-md border">
-        <div className="p-1">
+        <div className="p-1 max-w-full">
           {sortedBooks.map((book) => (
             <BookItem key={book.id} book={book} onDelete={handleDeleteClick} />
           ))}

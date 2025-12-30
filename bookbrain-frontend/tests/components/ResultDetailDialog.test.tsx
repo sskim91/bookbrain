@@ -53,7 +53,8 @@ describe('ResultDetailDialog', () => {
     );
 
     // Check title and page in header (use heading role to avoid matching sr-only description)
-    expect(screen.getByRole('heading', { name: /토비의 스프링 · p\.423/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /토비의 스프링/ })).toBeInTheDocument();
+    expect(screen.getByText('p.423')).toBeInTheDocument();
 
     // Check content is displayed
     expect(screen.getByText(/Spring Security는 인증/)).toBeInTheDocument();
@@ -179,7 +180,7 @@ describe('ResultDetailDialog', () => {
     expect(dialog).toBeInTheDocument();
 
     // Should have a title accessible to screen readers (use heading role)
-    expect(screen.getByRole('heading', { name: /토비의 스프링 · p\.423/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /토비의 스프링/ })).toBeInTheDocument();
   });
 
   it('displays score with two decimal places', () => {

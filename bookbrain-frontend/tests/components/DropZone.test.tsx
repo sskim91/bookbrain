@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DropZone } from '@/components/DropZone';
@@ -15,11 +15,7 @@ vi.mock('sonner', () => ({
 /**
  * Creates a mock File object for testing.
  */
-function createMockFile(
-  name: string,
-  type: string,
-  size: number = 1024
-): File {
+function createMockFile(name: string, type: string): File {
   const blob = new Blob([''], { type });
   return new File([blob], name, { type });
 }

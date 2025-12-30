@@ -41,8 +41,9 @@ export function ResultDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[560px] max-h-[80vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>
-            {result.title} · p.{result.page}
+          <DialogTitle className="break-words">
+            <span className="line-clamp-2">{result.title}</span>
+            <span className="text-muted-foreground font-normal text-base ml-2">p.{result.page}</span>
           </DialogTitle>
           <DialogDescription className="sr-only">
             {result.title}{STRINGS.DIALOG_DESCRIPTION_SUFFIX}

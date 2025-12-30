@@ -55,10 +55,15 @@ describe('SearchResultCard', () => {
     it('displays title and page in correct format', () => {
       render(<SearchResultCard result={mockResult} />);
 
-      // Title and page should be on same line with separator
+      // Title should be truncated and page on separate line
       expect(screen.getByText('Test Book')).toBeInTheDocument();
-      expect(screen.getByText('·')).toBeInTheDocument();
       expect(screen.getByText('p.42')).toBeInTheDocument();
+    });
+
+    it('has title with truncate class for long titles', () => {
+      render(<SearchResultCard result={mockResult} />);
+      const title = screen.getByText('Test Book');
+      expect(title).toHaveClass('truncate');
     });
 
     it('displays score in top-right area', () => {
