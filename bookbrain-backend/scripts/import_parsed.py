@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from bookbrain.core.config import settings
 from bookbrain.services.storage import get_s3_client, save_parsed_result
 from bookbrain.services.indexer import index_book
-from bookbrain.services.chunker import chunk_text
+from bookbrain.services.sentence_chunker import chunk_text  # sentence-aware chunking
 from bookbrain.models.parser import ParsedDocument, ParsedPage
 
 
