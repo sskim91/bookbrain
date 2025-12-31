@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { MainLayout } from '@/components/MainLayout';
 import { SearchInput } from '@/components/SearchInput';
@@ -14,6 +14,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [selectedResult, setSelectedResult] = useState<SearchResultItem | null>(null);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   const { data, isFetching, isError, error } = useSearch(searchQuery);
 
@@ -24,25 +25,35 @@ function App() {
     }
   }, [isError, error]);
 
-  // Global ⌘K keyboard shortcut handler with focus guard
+  // Global keyboard shortcuts handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        // Focus guard: skip if in contenteditable or textarea to avoid conflicts
-        const target = e.target as HTMLElement;
-        const isContentEditable = target.isContentEditable;
-        const isTextarea = target.tagName === 'TEXTAREA';
+      const hasModifier = e.metaKey || e.ctrlKey;
 
-        if (isContentEditable || isTextarea) {
-          return;
-        }
-
+      // Global shortcuts with modifier keys work everywhere (including inputs)
+      // ⌘K / Ctrl+K - Open command palette
+      if (e.key === 'k' && hasModifier) {
         e.preventDefault();
         setCommandPaletteOpen((prev) => !prev);
+        return;
       }
+
+      // ⌘U / Ctrl+U - Open upload dialog
+      if (e.key === 'u' && hasModifier) {
+        e.preventDefault();
+        setUploadDialogOpen((prev) => !prev);
+        return;
+      }
+
+      // For non-modifier shortcuts, apply focus guard
+      // (currently none, but ready for future shortcuts like Escape)
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleSearchClick = useCallback(() => {
+    setCommandPaletteOpen(true);
   }, []);
 
   const handleSearch = () => {
@@ -59,7 +70,11 @@ function App() {
   };
 
   return (
-    <MainLayout>
+    <MainLayout
+      uploadDialogOpen={uploadDialogOpen}
+      onUploadDialogOpenChange={setUploadDialogOpen}
+      onSearchClick={handleSearchClick}
+    >
       <div className="w-full max-w-[800px] flex flex-col items-center pt-16">
         <SearchInput
           value={inputValue}

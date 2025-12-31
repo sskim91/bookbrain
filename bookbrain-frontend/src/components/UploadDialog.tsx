@@ -13,13 +13,34 @@ import { DropZone } from '@/components/DropZone';
 import { UploadProgress } from '@/components/UploadProgress';
 import { UploadErrorState } from '@/components/UploadErrorState';
 import { BookList } from '@/components/BookList';
+import { Kbd } from '@/components/ui/kbd';
 import { STRINGS } from '@/constants/strings';
 import { formatFileSize } from '@/lib/utils';
 import { useUploadBook } from '@/hooks/useUploadBook';
 
-export function UploadDialog() {
+interface UploadDialogProps {
+  /** Controlled open state (optional) */
+  open?: boolean;
+  /** Controlled open change handler (optional) */
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function UploadDialog({ open: controlledOpen, onOpenChange }: UploadDialogProps = {}) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  // Use controlled state if provided, otherwise use internal state
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+
+  // Safe state change handler - works for both controlled and uncontrolled modes
+  const setOpen = (newOpen: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(newOpen);
+    } else {
+      setInternalOpen(newOpen);
+    }
+  };
 
   const {
     upload,
@@ -156,11 +177,12 @@ export function UploadDialog() {
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          size="sm"
           aria-label={STRINGS.UPLOAD_BUTTON_ARIA_LABEL}
+          className="h-9 gap-2 px-3"
         >
-          <Upload className="mr-2 h-4 w-4" />
-          {STRINGS.UPLOAD_BUTTON}
+          <Upload className="h-4 w-4" />
+          <span className="hidden sm:inline">{STRINGS.UPLOAD_BUTTON}</span>
+          <Kbd showModifier size="sm" className="hidden sm:inline-flex">U</Kbd>
         </Button>
       </DialogTrigger>
       <DialogContent
