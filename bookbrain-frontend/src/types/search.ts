@@ -1,7 +1,6 @@
 export interface SearchResultItem {
   book_id: number;
   title: string;
-  author: string | null;
   page: number;
   content: string;
   score: number;

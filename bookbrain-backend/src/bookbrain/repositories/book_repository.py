@@ -15,7 +15,8 @@ class Book(TypedDict):
 
     id: int
     title: str
-    author: str | None
+    original_filename: str | None
+    file_name: str | None
     file_path: str
     total_pages: int | None
     embedding_model: str | None
@@ -25,7 +26,8 @@ class Book(TypedDict):
 async def create_book(
     title: str,
     file_path: str,
-    author: str | None = None,
+    original_filename: str | None = None,
+    file_name: str | None = None,
     total_pages: int | None = None,
     embedding_model: str | None = None,
     conn: psycopg.AsyncConnection | None = None,
@@ -35,8 +37,9 @@ async def create_book(
 
     Args:
         title: Book title
-        file_path: Path to the PDF file
-        author: Book author (optional)
+        file_path: Path to the PDF file (S3 path)
+        original_filename: Original uploaded filename
+        file_name: Stored filename (UUID-based)
         total_pages: Total number of pages (optional)
         embedding_model: Embedding model version used (optional)
         conn: Optional existing database connection (caller manages transaction)
@@ -49,8 +52,8 @@ async def create_book(
         If conn is None, this function commits automatically.
     """
     query = """
-        INSERT INTO books (title, author, file_path, total_pages, embedding_model)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO books (title, original_filename, file_name, file_path, total_pages, embedding_model)
+        VALUES (%s, %s, %s, %s, %s, %s)
         RETURNING id
     """
 
@@ -60,7 +63,7 @@ async def create_book(
         try:
             async with connection.cursor(row_factory=dict_row) as cur:
                 await cur.execute(
-                    query, (title, author, file_path, total_pages, embedding_model)
+                    query, (title, original_filename, file_name, file_path, total_pages, embedding_model)
                 )
                 result = await cur.fetchone()
                 if result is None:
@@ -95,7 +98,7 @@ async def get_book(
         The book record or None if not found
     """
     query = """
-        SELECT id, title, author, file_path, total_pages, embedding_model, created_at
+        SELECT id, title, original_filename, file_name, file_path, total_pages, embedding_model, created_at
         FROM books
         WHERE id = %s
     """
@@ -132,7 +135,7 @@ async def get_books_by_ids(
 
     # Use ANY() for efficient batch lookup
     query = """
-        SELECT id, title, author, file_path, total_pages, embedding_model, created_at
+        SELECT id, title, original_filename, file_name, file_path, total_pages, embedding_model, created_at
         FROM books
         WHERE id = ANY(%s)
     """
@@ -167,7 +170,7 @@ async def get_books(
         List of book records
     """
     query = """
-        SELECT id, title, author, file_path, total_pages, embedding_model, created_at
+        SELECT id, title, original_filename, file_name, file_path, total_pages, embedding_model, created_at
         FROM books
         ORDER BY created_at DESC
         LIMIT %s OFFSET %s

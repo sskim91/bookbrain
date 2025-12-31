@@ -79,14 +79,12 @@ async def validate_pdf_file(file: UploadFile) -> None:
 
 # Validation constants
 MAX_TITLE_LENGTH = 500
-MAX_AUTHOR_LENGTH = 200
 
 
 @router.post("", response_model=IndexingResponse)
 async def upload_book(
     file: UploadFile = File(...),
     title: str | None = Form(None, max_length=MAX_TITLE_LENGTH),
-    author: str | None = Form(None, max_length=MAX_AUTHOR_LENGTH),
 ) -> IndexingResponse:
     """
     Upload a PDF and index it.
@@ -100,8 +98,7 @@ async def upload_book(
 
     Args:
         file: PDF file to upload
-        title: Book title (optional, defaults to filename)
-        author: Book author (optional)
+        title: Book title (optional, defaults to filename without extension)
 
     Returns:
         IndexingResponse with book_id and chunks_count
@@ -152,11 +149,16 @@ async def upload_book(
             temp_path = None  # Temp file moved, no longer exists
 
         # 5. Create book record with final storage path
-        book_title = title or (file.filename or "Untitled").replace(".pdf", "")
+        original_filename = file.filename or "Untitled.pdf"
+        book_title = title or original_filename.replace(".pdf", "").replace(".PDF", "")
+        # Extract file_name from file_path (e.g., "pdfs/uuid.pdf" -> "uuid.pdf")
+        stored_file_name = file_path.split("/")[-1] if file_path else None
+
         book_id = await book_repository.create_book(
             title=book_title,
             file_path=file_path,
-            author=author,
+            original_filename=original_filename,
+            file_name=stored_file_name,
         )
 
         # 6. Save parsed result with book_id (rename/link from temp)

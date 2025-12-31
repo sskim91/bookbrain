@@ -55,7 +55,6 @@ async def search_chunks(
                 {
                     "book_id": result.book_id,
                     "title": book["title"],
-                    "author": book["author"],
                     "page": result.page,
                     "content": result.content,
                     "score": result.score,

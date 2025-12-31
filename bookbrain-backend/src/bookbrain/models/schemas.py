@@ -9,7 +9,6 @@ class BookBase(BaseModel):
     """Base book schema."""
 
     title: str
-    author: str | None = None
 
 
 class BookResponse(BaseModel):
@@ -19,7 +18,8 @@ class BookResponse(BaseModel):
 
     id: int
     title: str
-    author: str | None
+    original_filename: str | None
+    file_name: str | None
     file_path: str
     total_pages: int | None
     embedding_model: str | None
@@ -76,7 +76,6 @@ class SearchResultItem(BaseModel):
 
     book_id: int
     title: str
-    author: str | None
     page: int
     content: str
     score: float  # 0.0 ~ 1.0 (Qdrant similarity score)
