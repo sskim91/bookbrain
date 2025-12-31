@@ -7,7 +7,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, Loader2, X } from 'lucide-react';
+import { Copy, Check, X } from 'lucide-react';
 import { useClipboard } from '@/hooks/useClipboard';
 import { formatMarkdown } from '@/lib/formatMarkdown';
 import { STRINGS } from '@/constants/strings';
@@ -28,7 +28,7 @@ export function ResultDetailDialog({
   onOpenChange,
   result,
 }: ResultDetailDialogProps) {
-  const { copy, isCopying, isCopied } = useClipboard();
+  const { copy, isCopied } = useClipboard();
 
   if (!result) return null;
 
@@ -62,18 +62,15 @@ export function ResultDetailDialog({
             <Button
               variant="secondary"
               onClick={handleCopy}
-              disabled={isCopying}
               aria-label={STRINGS.COPY_BUTTON_LABEL}
             >
-              {isCopying ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : isCopied ? (
+              {isCopied ? (
                 <Check className="h-4 w-4 text-green-500" />
               ) : (
                 <Copy className="h-4 w-4" />
               )}
               <span className="ml-2">
-                {isCopying ? STRINGS.COPYING : isCopied ? STRINGS.COPIED : STRINGS.COPY}
+                {isCopied ? STRINGS.COPIED : STRINGS.COPY}
               </span>
             </Button>
             <DialogClose asChild>

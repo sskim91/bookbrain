@@ -32,7 +32,6 @@ describe('useClipboard', () => {
 
     expect(result.current.copy).toBeDefined();
     expect(typeof result.current.copy).toBe('function');
-    expect(result.current.isCopying).toBe(false);
     expect(result.current.isCopied).toBe(false);
   });
 

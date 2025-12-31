@@ -4,7 +4,6 @@ import { STRINGS } from '@/constants/strings';
 
 interface UseClipboardReturn {
   copy: (text: string) => Promise<void>;
-  isCopying: boolean;
   isCopied: boolean;
 }
 
@@ -13,7 +12,6 @@ interface UseClipboardReturn {
  * @param timeout - Time in ms to show "copied" state (default: 2000)
  */
 export function useClipboard(timeout = 2000): UseClipboardReturn {
-  const [isCopying, setIsCopying] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -33,16 +31,13 @@ export function useClipboard(timeout = 2000): UseClipboardReturn {
         clearTimeout(timeoutRef.current);
       }
 
-      setIsCopying(true);
       try {
         await navigator.clipboard.writeText(text);
-        setIsCopying(false);
         setIsCopied(true);
         toast.success(STRINGS.TOAST_COPIED);
 
         timeoutRef.current = setTimeout(() => setIsCopied(false), timeout);
       } catch (error) {
-        setIsCopying(false);
         toast.error(STRINGS.TOAST_COPY_FAILED);
         console.error('Failed to copy:', error);
       }
@@ -50,5 +45,5 @@ export function useClipboard(timeout = 2000): UseClipboardReturn {
     [timeout]
   );
 
-  return { copy, isCopying, isCopied };
+  return { copy, isCopied };
 }

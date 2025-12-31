@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, Loader2 } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { ScoreIndicator } from './ScoreIndicator';
 import { useClipboard } from '@/hooks/useClipboard';
 import { formatMarkdown } from '@/lib/formatMarkdown';
@@ -18,7 +18,7 @@ interface SearchResultCardProps {
  * Clicking the Copy button copies markdown to clipboard without triggering card click.
  */
 export function SearchResultCard({ result, onClick }: SearchResultCardProps) {
-  const { copy, isCopying, isCopied } = useClipboard();
+  const { copy, isCopied } = useClipboard();
 
   const handleCopy = (e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation(); // Prevent card click for both mouse and keyboard events
@@ -74,18 +74,15 @@ export function SearchResultCard({ result, onClick }: SearchResultCardProps) {
           size="sm"
           onClick={handleCopy}
           onKeyDown={handleCopyKeyDown}
-          disabled={isCopying}
           aria-label={STRINGS.COPY_BUTTON_LABEL}
         >
-          {isCopying ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : isCopied ? (
+          {isCopied ? (
             <Check className="h-4 w-4 text-green-500" />
           ) : (
             <Copy className="h-4 w-4" />
           )}
           <span className="ml-2">
-            {isCopying ? STRINGS.COPYING : isCopied ? STRINGS.COPIED : STRINGS.COPY}
+            {isCopied ? STRINGS.COPIED : STRINGS.COPY}
           </span>
         </Button>
       </div>
