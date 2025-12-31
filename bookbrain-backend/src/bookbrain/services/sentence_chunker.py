@@ -17,8 +17,8 @@ from bookbrain.models.chunker import Chunk, ChunkedDocument
 from bookbrain.models.parser import ParsedDocument
 
 # Constants for chunking configuration
-CHUNK_SIZE = 1000  # target tokens (converted to ~4000 characters)
-CHUNK_OVERLAP = 200  # overlap in characters
+CHUNK_SIZE = 300  # target tokens (converted to ~1200 characters)
+CHUNK_OVERLAP = 50  # overlap in characters
 CHARS_PER_TOKEN = 4  # approximate ratio for Korean/English mixed text
 
 # Separators prioritized for sentence-aware splitting
